@@ -1,675 +1,277 @@
-# MuMuAINovel 📚✨
+# AI 小说创作台
 
-<div align="center">
+基于 [MuMuAINovel](https://github.com/xiamuceer-j/MuMuAINovel) 修改的裁剪版，专注「只做创作台」：世界设定、大纲、角色、章节写作与全书导出。
 
-<img src="frontend/public/logo.svg" alt="MuMuAINovel logo" width="120" />
+- 模型费用由用户自己承担（BYOK），站点不代收模型费用
+- 去知识库/RAG、提示词工坊、MCP 插件、LinuxDO 登录、赞助与厂商推广
+- 品牌名、标语、主题色、许可证信息均由环境变量配置
+- 兼容原项目 PostgreSQL + Docker Compose 部署方式，默认对外端口 8090
 
-![Version](https://img.shields.io/badge/version-1.5.8-blue.svg)
-![Python](https://img.shields.io/badge/python-3.12-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0-green.svg)
-![React](https://img.shields.io/badge/react-18.3.1-blue.svg)
-![License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)
+[快速开始](#快速开始) · [配置说明](#配置说明) · [项目结构](#项目结构) · [许可证](#许可证)
 
-**基于 AI 的智能小说创作助手**
+## 特性
 
-[特性](#-特性) • [快速开始](#-快速开始) • [配置说明](#%EF%B8%8F-配置说明) • [项目结构](#-项目结构)
+- 智能向导：AI 生成世界观、大纲、角色与组织
+- 章节创作：创建、续写、重写、局部改写、批量生成
+- 角色与关系：角色卡、组织架构、关系图谱、职业等级体系
+- 伏笔追踪：未回收线索提醒与伏笔时间线
+- 写作风格：自定义写作风格与项目默认风格
+- 全书导出：Markdown / TXT 稿件，可选大纲与角色附录
+- 用量统计：按场景与模型查看调用次数、Token 与耗时
+- 密钥加固：用户自带 API Key 加密存储、接口只返回掩码
+- 合规说明：隐私政策、用户协议、AI 生成内容标识、数据删除入口
 
-</div>
-
----
-
-<div align="center">
-
-## 💬 加入交流群
-
-欢迎扫码加入 QQ 交流群，一起交流 AI 小说创作心得、反馈问题、获取最新动态！
-
-<img src="frontend/public/qq.jpg" alt="QQ交流群二维码" width="300" />
-
-</div>
-
----
-
-<div align="center">
-
-## 💖 支持项目
-
-如果这个项目对你有帮助，欢迎通过以下方式支持开发：
-
-**[☕ 请我喝杯咖啡](https://mumuverse.space:1588/)**
-
-**[🌐 MuMuのAPI站点](https://ai.mumuverse.space/register?aff=Ob92)**
-
-> 在 MuMu の API 站点充值满 50 元及以上，也可以获得下方赞助专属权益。
-
-### 🎁 赞助专属权益
-
-| 权益 | 说明 |
-|------|------|
-| 📋 **优先需求响应** | 您的功能需求和问题反馈将获得优先处理 |
-| 🚀 **Windows一键启动** | 获取免安装 EXE 程序，双击即可使用 |
-| 💬 **专属技术支持** | 加入赞助者内部群，获得远程协助和配置指导 |
-
-您的支持是我持续开发的动力！🙏
-
-</div>
-
----
-
-## 🤝 赞助商
-
-<table>
-<tr>
-<td width="200" align="center" valign="middle"><a href="https://www.aiyoyoo.com/register?aff=4AXY9WGE2C5Q"><img src="images/CrazyToken.png" alt="CrazyToken" width="180"></a></td>
-<td valign="middle">感谢 <strong>CrazyToken</strong> 赞助支持本项目！CrazyToken 提供 Claude、GPT、Gemini、Kimi、GLM、DeepSeek、Qwen、Grok 等全系主流模型，覆盖大纲构思、正文续写、爽点打磨、润色改稿，针对不同环节选择最合适的模型。全模型低至官方价格的 5%（<code>0.05×</code>），Token 级账单透明可查；官方原生通道，不掺水、不混模、不压缩长上下文，保持模型原生输出体验；稳定高速、高并发不限流，支持多书创作和章节批量生成。新用户通过 <a href="https://www.aiyoyoo.com/register?aff=4AXY9WGE2C5Q">专属链接</a> 注册即送 <code>$20</code> 体验额度，充值额外加赠，并提供独家 1 对 1 远程配置服务，全程真人协助，开箱即用。</td>
-</tr>
-<tr>
-<td width="200" align="center" valign="middle"><strong>欢迎赞助</strong></td>
-<td valign="middle">欢迎赞助本项目，支持 MuMuAINovel 持续开发！<br>赞助或合作联系：<a href="https://qm.qq.com/q/YZScNlOa66">点击此链接</a>。</td>
-</tr>
-</table>
-
-<br>
-
----
-
-## ✨ 特性
-
-- 🤖 **多 AI 模型** - 支持 OpenAI、Gemini、Claude 等主流模型
-- 📝 **智能向导** - AI 自动生成大纲、角色和世界观
-- 👥 **角色管理** - 人物关系、组织架构可视化管理
-- 📖 **章节编辑** - 支持创建、编辑、重新生成和润色
-- 🌐 **世界观设定** - 构建完整的故事背景
-- 🔐 **多种登录** - LinuxDO OAuth 或本地账户登录
-- 💾 **PostgreSQL** - 生产级数据库，多用户数据隔离
-- 🐳 **Docker 部署** - 一键启动，开箱即用
-
-## 📸 项目预览
-
-<details>
-
-<summary>多图预警</summary>
-
-<div align="center">
-
-### 登录界面
-![登录界面](images/1.png)
-
-![登录界面](images/1-1.png)
-
-### 主界面
-![主界面](images/2.png)
-
-![主界面（暗色）](images/2-1.png)
-
-### 项目管理
-![项目管理](images/3.png)
-
-![项目管理](images/3-1.png)
-
-### 赞助我 💖
-![赞助我](images/4.png)
-
-![赞助我](images/4-1.png)
-
-</div>
-
-</details>
-
-## 📋 TODO List
-
-### ✅ 已完成功能
-
-- [x] **灵感模式** - 创作灵感和点子生成
-- [x] **自定义写作风格** - 支持自定义 AI 写作风格
-- [x] **数据导入导出** - 项目数据的导入导出
-- [x] **Prompt 调整界面** - 可视化编辑 Prompt 模板
-- [x] **章节字数限制** - 用户可设置生成字数
-- [x] **思维链与章节关系图谱** - 可视化章节逻辑关系
-- [x] **根据分析一键重写** - 根据分析建议重新生成
-- [x] **Linux DO 自动创建账号** - OAuth 登录自动生成账号
-- [x] **职业等级体系** - 自定义职业和等级系统，支持修仙境界、魔法等级等多种体系
-- [x] **角色/组织卡片导入导出** - 单独导出角色和组织卡片，支持跨项目数据共享
-- [x] **伏笔管理** - 智能追踪剧情伏笔，提醒未回收线索，可视化伏笔时间线
-- [x] **提示词工坊** - 社区驱动的 Prompt 模板分享平台，一键导入优质提示词
-- [x] **拆书功能** - 目前呼声比较高的功能，一键拆书，给当年的ta一个圆满的结局
-
-### 📝 规划中功能
-
-......
-
-> 💡 欢迎提交 Issue 或 Pull Request！
-
-## 💻 硬件配置要求
-
-### 最低配置（个人使用/开发环境）
-
-| 组件 | 要求 |
-|------|------|
-| **CPU** | 2 核 |
-| **内存** | 2 GB RAM |
-| **存储** | 10 GB 可用空间 |
-| **网络** | 稳定互联网连接（用于调用 AI API） |
-
-### 推荐配置（小型团队/生产环境）
-
-| 组件 | 要求 |
-|------|------|
-| **CPU** | 4 核 |
-| **内存** | 8 GB RAM |
-| **存储** | 20 GB SSD |
-| **网络** | 稳定互联网连接 |
-
-### 高并发配置（80-150 用户）
-
-| 组件 | 要求 |
-|------|------|
-| **CPU** | 8 核 |
-| **内存** | 16 GB RAM |
-| **存储** | 50 GB+ SSD |
-| **网络** | 高带宽连接 |
-
-> **📌 说明**
-> - **Embedding 模型**：约 400 MB 磁盘空间，运行时加载到内存
-> - **PostgreSQL**：默认配置使用 256 MB shared_buffers，1 GB effective_cache_size
-> - **Docker 部署**：建议预留额外 1-2 GB 内存给容器运行时
-> - 本项目主要依赖外部 AI API（OpenAI/Claude/Gemini），不需要本地 GPU
-
-## 🚀 快速开始
+## 快速开始
 
 ### 前置要求
 
-- Docker 和 Docker Compose
-- 至少一个 AI 服务的 API Key（OpenAI/Gemini/Claude）
+- Docker 与 Docker Compose
+- 一个可用的模型服务 API Key（OpenAI 兼容、Gemini 或 Anthropic）
 
-### Docker Compose 部署（推荐）
+### Docker Compose 部署
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/xiamuceer-j/MuMuAINovel.git
+# 1. 克隆仓库
+git clone https://github.com/hjm222222/MuMuAINovel.git
 cd MuMuAINovel
 
-# 2. 配置环境变量（必需）
-cp backend/.env.example .env
-# 编辑 .env 文件，填入必要配置（API Key、数据库密码等）
+# 2. 准备环境变量
+cp .env.example .env
 
-# 3. 确保文件准备完整
-# ⚠️ 重要：确保以下文件存在
-# - .env（配置文件，必需挂载到容器）
-# - backend/scripts/init_postgres.sql（数据库初始化脚本）
+# 3. 生成两个高强度随机密钥并写入 .env
+# SESSION_SECRET_KEY 用于会话签名
+# CREDENTIAL_ENCRYPTION_KEY 用于加密用户自带 API Key
+openssl rand -hex 32
 
-# 4. 启动服务
-docker-compose up -d
+# 4. 修改 .env 中的数据库密码与本地管理员密码
 
-# 5. 访问应用
-# 打开浏览器访问 http://localhost:8000
+# 5. 启动服务
+docker compose up -d
+
+# 6. 访问应用
+# 浏览器打开 http://localhost:8090
 ```
 
-> **📌 注意事项**
->
-> 1. **`.env` 文件挂载**: `docker-compose.yml` 会自动将 `.env` 挂载到容器，确保文件存在
-> 2. **数据库初始化**: `init_postgres.sql` 会在首次启动时自动执行，安装必要的PostgreSQL扩展
-> 3. **自行构建**: 如需从源码构建，请先下载 embedding 模型文件（[加群获取](frontend/public/qq.jpg)）
+启动后：
 
-### 使用 Docker Hub 镜像（推荐新手）
+- 应用首页：`http://localhost:8090`
+- API 文档：`http://localhost:8090/docs`
 
-```bash
-# 1. 拉取最新镜像（已包含模型文件）
-docker pull mumujie/mumuainovel:latest
+数据库密码与管理员密码务必在首次启动前改掉，容器启动时会自动执行 Alembic 迁移。
 
-# 2. 创建 docker-compose.yml（点击下方展开查看完整配置）
-```
+### 本地开发
 
-<details>
-<summary>📄 点击展开 docker-compose.yml 完整配置</summary>
-
-```yaml
-services:
-  postgres:
-    image: postgres:18-alpine
-    container_name: mumuainovel-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-mumuai_novel}
-      POSTGRES_USER: ${POSTGRES_USER:-mumuai}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
-      TZ: ${TZ:-Asia/Shanghai}
-    volumes:
-      - postgres_data:/var/lib/postgresql
-      - ./backend/scripts/init_postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mumuai} -d ${POSTGRES_DB:-mumuai_novel}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      - ai-story-network
-    command:
-      - postgres
-      - -c
-      - max_connections=${POSTGRES_MAX_CONNECTIONS:-200}
-      - -c
-      - shared_buffers=${POSTGRES_SHARED_BUFFERS:-256MB}
-      - -c
-      - effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-1GB}
-      - -c
-      - maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-64MB}
-      - -c
-      - checkpoint_completion_target=${POSTGRES_CHECKPOINT_COMPLETION_TARGET:-0.9}
-      - -c
-      - wal_buffers=${POSTGRES_WAL_BUFFERS:-16MB}
-      - -c
-      - default_statistics_target=${POSTGRES_DEFAULT_STATISTICS_TARGET:-100}
-      - -c
-      - random_page_cost=${POSTGRES_RANDOM_PAGE_COST:-1.1}
-      - -c
-      - effective_io_concurrency=${POSTGRES_EFFECTIVE_IO_CONCURRENCY:-200}
-      - -c
-      - work_mem=${POSTGRES_WORK_MEM:-4MB}
-      - -c
-      - min_wal_size=${POSTGRES_MIN_WAL_SIZE:-1GB}
-      - -c
-      - max_wal_size=${POSTGRES_MAX_WAL_SIZE:-4GB}
-
-  mumuainovel:
-    image: mumujie/mumuainovel:latest
-    container_name: mumuainovel
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "${APP_PORT:-8000}:8000"
-    volumes:
-      - ./logs:/app/logs
-      - ./.env:/app/.env:ro
-      - ./storage/generated_covers:/app/backend/storage/generated_covers
-    environment:
-      # 应用配置
-      - APP_NAME=${APP_NAME:-MuMuAINovel}
-      - APP_VERSION=${APP_VERSION:-1.5.8}
-      - APP_HOST=${APP_HOST:-0.0.0.0}
-      - APP_PORT=8000
-      - DEBUG=${DEBUG:-false}
-      # 数据库配置
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-mumuai}:${POSTGRES_PASSWORD:-123456}@postgres:5432/${POSTGRES_DB:-mumuai_novel}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-123456}
-      # PostgreSQL 连接池配置
-      - DATABASE_POOL_SIZE=${DATABASE_POOL_SIZE:-30}
-      - DATABASE_MAX_OVERFLOW=${DATABASE_MAX_OVERFLOW:-20}
-      - DATABASE_POOL_TIMEOUT=${DATABASE_POOL_TIMEOUT:-60}
-      - DATABASE_POOL_RECYCLE=${DATABASE_POOL_RECYCLE:-1800}
-      - DATABASE_POOL_PRE_PING=${DATABASE_POOL_PRE_PING:-True}
-      - DATABASE_POOL_USE_LIFO=${DATABASE_POOL_USE_LIFO:-True}
-      # 全局代理配置（可选）
-      - HTTP_PROXY=${HTTP_PROXY:-}
-      - HTTPS_PROXY=${HTTPS_PROXY:-}
-      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1}
-      # AI 服务配置
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - GEMINI_BASE_URL=${GEMINI_BASE_URL:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-}
-      - DEFAULT_AI_PROVIDER=${DEFAULT_AI_PROVIDER:-openai}
-      - DEFAULT_MODEL=${DEFAULT_MODEL:-gpt-4o-mini}
-      - DEFAULT_TEMPERATURE=${DEFAULT_TEMPERATURE:-0.7}
-      - DEFAULT_MAX_TOKENS=${DEFAULT_MAX_TOKENS:-32000}
-      - ALLOW_PRIVATE_AI_ENDPOINTS=${ALLOW_PRIVATE_AI_ENDPOINTS:-false}
-      - ALLOWED_AI_HOSTS=${ALLOWED_AI_HOSTS:-}
-      # LinuxDO OAuth 配置
-      - LINUXDO_CLIENT_ID=${LINUXDO_CLIENT_ID:-11111}
-      - LINUXDO_CLIENT_SECRET=${LINUXDO_CLIENT_SECRET:-11111}
-      - LINUXDO_REDIRECT_URI=${LINUXDO_REDIRECT_URI:-http://localhost:8000/api/auth/linuxdo/callback}
-      - LINUXDO_PROXY_URL=${LINUXDO_PROXY_URL:-}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:8000}
-      # 本地账户登录配置
-      - LOCAL_AUTH_ENABLED=${LOCAL_AUTH_ENABLED:-true}
-      - LOCAL_AUTH_USERNAME=${LOCAL_AUTH_USERNAME:-admin}
-      - LOCAL_AUTH_PASSWORD=${LOCAL_AUTH_PASSWORD:-admin123}
-      - LOCAL_AUTH_DISPLAY_NAME=${LOCAL_AUTH_DISPLAY_NAME:-本地管理员}
-      # 会话配置
-      - SESSION_EXPIRE_MINUTES=${SESSION_EXPIRE_MINUTES:-120}
-      - SESSION_REFRESH_THRESHOLD_MINUTES=${SESSION_REFRESH_THRESHOLD_MINUTES:-30}
-      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-true}
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - ai-story-network
-
-volumes:
-  postgres_data:
-    driver: local
-
-networks:
-  ai-story-network:
-    driver: bridge
-```
-
-</details>
-
-```bash
-# 3. 启动服务
-docker-compose up -d
-
-# 4. 查看日志
-docker-compose logs -f
-
-# 5. 更新到最新版本
-docker-compose pull
-docker-compose up -d
-```
-
-> **💡 提示**: Docker Hub 镜像已包含所有依赖和模型文件，无需额外下载
-
-### 本地开发 / 从源码构建
-
-#### 前置准备
-
-```bash
-# ⚠️ 重要：如果从源码构建，需要先下载 embedding 模型文件
-# 模型文件较大（约 400MB），需放置到以下目录：
-# backend/embedding/models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2/
-#
-# 📥 获取方式：
-# - 加入项目 QQ 群或 Linux DO 讨论区获取下载链接
-# - 群号：见项目主页
-# - Linux DO：https://linux.do/t/topic/1100112
-```
-
-#### 后端
+后端：
 
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 
-# 配置 .env 文件
+# 复制配置模板并按需修改
 cp .env.example .env
-# 编辑 .env 填入必要配置
 
-# 启动 PostgreSQL（可使用 Docker）
-docker run -d --name postgres \
-  -e POSTGRES_PASSWORD=your_password \
-  -e POSTGRES_DB=mumuai_novel \
-  -p 5432:5432 \
-  postgres:18-alpine
-
-# 启动后端
+# 启动开发服务
 python -m uvicorn app.main:app --host localhost --port 8000 --reload
 ```
 
-#### 前端
+前端：
 
 ```bash
 cd frontend
 npm install
-npm run dev  # 开发模式
-npm run build  # 生产构建
+npm run dev
 ```
 
-## ⚙️ 配置说明
+## 配置说明
 
-### 必需配置
+### 品牌配置
 
-创建 `.env` 文件：
+站点名称、标语、主题色与许可证信息全部通过环境变量提供，前端启动时通过 `/api/site/branding` 获取：
 
 ```bash
-# PostgreSQL 数据库（必需）
-DATABASE_URL=postgresql+asyncpg://mumuai:your_password@postgres:5432/mumuai_novel
-POSTGRES_PASSWORD=your_secure_password
+APP_NAME=AI 小说创作台
+APP_SLOGAN=只做创作台的自托管 AI 小说工作台
+APP_DESCRIPTION=面向小说创作者的 AI 创作台
+BRAND_PRIMARY_COLOR=#4D8088
+BRAND_ACCENT_COLOR=#C08A6A
+BRAND_FOOTER_NOTE=基于 MuMuAINovel 修改 · GPL v3
+UPSTREAM_NAME=MuMuAINovel
+UPSTREAM_URL=https://github.com/xiamuceer-j/MuMuAINovel
+LICENSE_NAME=GPL-3.0
+LICENSE_URL=https://www.gnu.org/licenses/gpl-3.0.html
+AI_CONTENT_NOTICE=本站生成内容由 AI 辅助完成，请在发布或商用前进行人工审校。
+```
 
-# AI 服务
-OPENAI_API_KEY=your_openai_key
-OPENAI_BASE_URL=https://api.openai.com/v1
+### 安全配置
+
+```bash
+# 会话签名密钥，生产环境必填
+SESSION_SECRET_KEY=
+
+# 用户自带 API Key 的加密密钥，生产环境必填
+# 生成方式：openssl rand -hex 32
+CREDENTIAL_ENCRYPTION_KEY=
+
+# HTTPS 部署时设为 true，HTTP 部署时设为 false
+SESSION_COOKIE_SECURE=false
+```
+
+未配置 `CREDENTIAL_ENCRYPTION_KEY` 时会回退到 `SESSION_SECRET_KEY`，两者都缺失时用户密钥以明文保存并记录告警日志，生产环境务必配置。
+
+### 上游云服务开关
+
+本项目独立部署，默认关闭对上游云端工坊与云端公告的调用，公告使用本地数据：
+
+```bash
+CLOUD_SERVICES_ENABLED=false
+
+# 更新日志来源，默认指向本 fork 仓库
+CHANGELOG_ENABLED=true
+CHANGELOG_REPO_OWNER=hjm222222
+CHANGELOG_REPO_NAME=MuMuAINovel
+```
+
+### 模型服务配置
+
+用户在「设置」页按账号配置自己的 API Key，管理员也可提供站点级默认配置：
+
+```bash
 DEFAULT_AI_PROVIDER=openai
 DEFAULT_MODEL=gpt-4o-mini
+DEFAULT_TEMPERATURE=0.7
+DEFAULT_MAX_TOKENS=32000
 
-# 本地账户登录
-LOCAL_AUTH_ENABLED=true
-LOCAL_AUTH_USERNAME=admin
-LOCAL_AUTH_PASSWORD=your_password
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
 ```
 
-### 可选配置
+OpenAI 兼容的中转服务直接修改 `OPENAI_BASE_URL` 即可。
+
+### 本地或内网模型
+
+默认拒绝访问 `localhost`、私网 IP 与解析到内网的主机名，用于降低 SSRF 风险：
 
 ```bash
-# LinuxDO OAuth
-LINUXDO_CLIENT_ID=your_client_id
-LINUXDO_CLIENT_SECRET=your_client_secret
-LINUXDO_REDIRECT_URI=http://localhost:8000/api/auth/callback
-# LinuxDO 登录专用代理（可选，仅影响 OAuth token 与用户信息请求）
-LINUXDO_PROXY_URL=http://127.0.0.1:7890
-
-# PostgreSQL 连接池（高并发优化）
-DATABASE_POOL_SIZE=30
-DATABASE_MAX_OVERFLOW=20
-
-# 会话 Cookie Secure 标记
-# 默认 true，适合 HTTPS 部署；如果使用 HTTP 访问并且浏览器不保存登录 Cookie，可设为 false
-SESSION_COOKIE_SECURE=true
-
-# 本地 / Docker 内网 LLM（默认关闭，保持 SSRF 防护）
-# ALLOW_PRIVATE_AI_ENDPOINTS=true
-# ALLOWED_AI_HOSTS=host.docker.internal,127.0.0.1
+# 允许访问本机 Ollama / llama.cpp
+ALLOW_PRIVATE_AI_ENDPOINTS=true
+ALLOWED_AI_HOSTS=host.docker.internal,127.0.0.1
 ```
 
-> **🔐 Cookie Secure 说明**
->
-> - HTTPS 部署：建议保持 `SESSION_COOKIE_SECURE=true`，浏览器只会通过 HTTPS 发送登录 Cookie。
-> - HTTP 部署：如果登录后浏览器没有保存 Cookie，请在 `.env` 中设置 `SESSION_COOKIE_SECURE=false`，然后重启后端或 Docker 容器。
-> - Docker Compose 示例默认使用 `SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-true}`，如需关闭必须在 `.env` 中显式配置。
->
-> **🌐 LinuxDO 专用代理说明**
->
-> - 如果只有 LinuxDO 授权登录在当前网络不可达，优先配置 `LINUXDO_PROXY_URL`，不要配置全局 `HTTP_PROXY` / `HTTPS_PROXY`。
-> - `LINUXDO_PROXY_URL` 只会用于 LinuxDO OAuth 的 token 交换和用户信息请求，不影响 AI 服务、SMTP、数据库等其他网络调用。
-> - 常见示例：`LINUXDO_PROXY_URL=http://127.0.0.1:7890`；Docker 容器内访问宿主机代理时通常需要使用宿主机在 Docker 网络中的地址，而不是容器内的 `127.0.0.1`。
-> - 当前示例按 HTTP 代理配置；如果需要 SOCKS 代理，请先确保运行环境安装了 httpx 的 SOCKS 支持依赖。
->
-> **🖥️ 本地 / Docker 内网 LLM 说明**
->
-> - 默认会拒绝 `localhost`、`127.0.0.1`、私网 IP 以及解析到内网的主机名（例如 `host.docker.internal`），用于降低 SSRF 风险。
-> - 如果 AI 服务跑在本机 Ollama / llama.cpp，或 Docker 容器需要访问宿主机上的模型，请在 `.env` 中设置 `ALLOW_PRIVATE_AI_ENDPOINTS=true`，或把允许的主机名写入 `ALLOWED_AI_HOSTS`。
-> - 即使开启本地放行，链路本地地址（如云厂商元数据 `169.254.169.254`）仍然会被拒绝。
-> - MCP 插件 URL 不受该开关影响，继续走严格的公网校验。
-
-### 中转 API 配置
-
-支持所有 OpenAI 兼容格式的中转服务：
-
-```bash
-# New API 示例
-OPENAI_API_KEY=sk-xxxxxxxx
-OPENAI_BASE_URL=https://api.new-api.com/v1
-
-# 其他中转服务
-OPENAI_BASE_URL=https://your-proxy-service.com/v1
-```
-
-## 🐳 Docker 部署详情
+## Docker 部署详情
 
 ### 服务架构
 
-- **postgres**: PostgreSQL 18 数据库
-  - 端口: 5432
-  - 数据持久化: `postgres_data` volume
-  - 初始化脚本: `backend/scripts/init_postgres.sql`（自动挂载）
-  - 优化配置: 支持 80-150 并发用户
-
-- **mumuainovel**: 主应用服务
-  - 端口: 8000
-  - 日志目录: `./logs`
-  - 配置挂载: `.env` 文件
-  - 自动等待数据库就绪
-  - 健康检查: 每 30 秒检测一次
-
-### 重要文件说明
-
-| 文件 | 说明 | 是否必需 |
-|------|------|---------|
-| `.env` | 环境配置（API Key、数据库密码等） | ✅ 必需 |
-| `docker-compose.yml` | 服务编排配置 | ✅ 必需 |
-| `backend/scripts/init_postgres.sql` | PostgreSQL 扩展安装脚本 | ✅ 自动挂载 |
-| `backend/embedding/models--*/` | Embedding 模型文件 | ⚠️ 自建需要 |
-
-> **注意**: 使用 Docker Hub 镜像时，模型文件已包含在镜像中，无需额外下载
+- `postgres`：PostgreSQL 18，端口 5432，数据保存在 `postgres_data` volume
+- `ai-novel`：主应用服务，宿主机端口由 `APP_PORT` 控制，默认 8090
 
 ### 常用命令
 
 ```bash
 # 启动服务
-docker-compose up -d
+docker compose up -d
 
 # 查看状态
-docker-compose ps
+docker compose ps
 
 # 查看日志
-docker-compose logs -f
+docker compose logs -f ai-novel
 
 # 停止服务
-docker-compose down
+docker compose down
 
 # 重启服务
-docker-compose restart
+docker compose restart
+```
 
-# 查看资源使用
-docker stats
+### 端口配置
+
+```bash
+# .env 中修改宿主机端口
+APP_PORT=8090
 ```
 
 ### 数据持久化
 
-- `./postgres_data` - PostgreSQL 数据库文件
-- `./logs` - 应用日志文件
+- `postgres_data`：PostgreSQL 数据文件
+- `./logs`：应用日志
+- `./storage/generated_covers`：生成的项目封面
 
-### 端口配置
-
-修改 `docker-compose.yml` 中的端口映射：
-
-```yaml
-ports:
-  - "8800:8000"  # 宿主机:容器
-```
-
-## 📁 项目结构
+## 项目结构
 
 ```
 MuMuAINovel/
-├── backend/                 # 后端服务
+├── backend/                 # FastAPI 后端
 │   ├── app/
-│   │   ├── api/            # API 路由
-│   │   ├── models/         # 数据模型
-│   │   ├── services/       # 业务逻辑
-│   │   ├── middleware/     # 中间件
-│   │   ├── database.py     # 数据库连接
-│   │   └── main.py         # 应用入口
-│   ├── scripts/            # 工具脚本
-│   └── requirements.txt    # Python 依赖
-├── frontend/               # 前端应用
+│   │   ├── api/             # API 路由
+│   │   ├── models/          # 数据模型
+│   │   ├── services/        # 业务逻辑
+│   │   ├── middleware/      # 中间件
+│   │   ├── database.py      # 数据库连接
+│   │   └── main.py          # 应用入口
+│   ├── alembic/             # 数据库迁移
+│   └── requirements.txt
+├── frontend/                # React 前端
 │   ├── src/
-│   │   ├── pages/         # 页面组件
-│   │   ├── components/    # 通用组件
-│   │   ├── services/      # API 服务
-│   │   └── store/         # 状态管理
+│   │   ├── pages/           # 页面
+│   │   ├── components/      # 通用组件
+│   │   ├── services/        # API 客户端
+│   │   ├── config/          # 品牌与版本配置
+│   │   └── store/           # 状态管理
 │   └── package.json
-├── docker-compose.yml      # Docker Compose 配置
-├── Dockerfile             # Docker 镜像构建
-└── README.md
+├── .github/workflows/ci.yml # CI：后端校验、前端构建、镜像构建与启动验收
+├── docker-compose.yml
+├── Dockerfile
+└── .env.example
 ```
 
-## 🛠️ 技术栈
+## 技术栈
 
-**后端**: FastAPI • PostgreSQL • SQLAlchemy • OpenAI/Claude/Gemini SDK
+后端：FastAPI · SQLAlchemy · Alembic · PostgreSQL · Pydantic
 
-**前端**: React 18 • TypeScript • Ant Design • Zustand • Vite
+前端：React 18 · TypeScript · Ant Design 5 · Zustand · Vite
 
-## 📖 使用指南
+## 使用指南
 
-1. **登录系统** - 使用本地账户或 LinuxDO 账户
-2. **创建项目** - 选择"使用向导创建"
-3. **AI 生成** - 输入基本信息，AI 自动生成大纲和角色
-4. **编辑完善** - 管理角色关系，生成和编辑章节
+1. 登录系统：使用本地账户登录，管理员账号由 `LOCAL_AUTH_USERNAME` 与 `LOCAL_AUTH_PASSWORD` 指定
+2. 配置模型：在「设置」页填写自己的 API Key，保存后即可测试连通性
+3. 创建项目：通过向导生成世界观、大纲与角色，或手动创建
+4. 创作章节：逐章生成、续写与改写，保持大纲与角色一致
+5. 导出成果：章节页「导出全书」输出 Markdown / TXT，项目列表可导出完整 JSON
 
-### API 文档
+## 持续集成
 
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+`.github/workflows/ci.yml` 在每次推送执行三项检查：
 
-## 🤝 贡献
+- Backend：安装依赖、编译全部源码、导入应用做冒烟测试
+- Frontend：`npm ci` 后执行类型检查与生产构建
+- Docker image：构建镜像，用 PostgreSQL 服务容器启动容器并验证 `/health`
 
-欢迎提交 Issue 和 Pull Request！
+## 数据与隐私
 
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
+- 用户 API Key 以 Fernet 加密存储，接口只返回掩码
+- 提供用量统计（调用次数、Token、耗时），数据仅保存在本地数据库
+- 提供创作数据删除与账号注销接口，前端入口位于「设置 - 数据与隐私」与合规页
+- 生成内容带 AI 辅助生成标识声明
 
-### 贡献者
+## 许可证
 
-感谢所有为本项目做出贡献的开发者！
+本项目基于 [MuMuAINovel](https://github.com/xiamuceer-j/MuMuAINovel) 修改，遵循 [GNU General Public License v3.0](LICENSE)。
 
-<a href="https://github.com/xiamuceer-j/MuMuAINovel/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=xiamuceer-j/MuMuAINovel" />
-</a>
+GPL v3 意味着：
 
-## 📝 许可证
+- 可自由使用、修改和分发
+- 可用于商业目的
+- 必须开源修改版本
+- 必须保留原作者版权
+- 衍生作品必须使用 GPL v3 协议
 
-本项目采用 [GNU General Public License v3.0](LICENSE)
-
-**GPL v3 意味着：**
-- ✅ 可自由使用、修改和分发
-- ✅ 可用于商业目的
-- 📝 必须开源修改版本
-- 📝 必须保留原作者版权
-- 📝 衍生作品必须使用 GPL v3 协议
-
-## 🙏 致谢
+## 致谢
 
 - [FastAPI](https://fastapi.tiangolo.com/) - Python Web 框架
 - [React](https://react.dev/) - 前端框架
 - [Ant Design](https://ant.design/) - UI 组件库
 - [PostgreSQL](https://www.postgresql.org/) - 数据库
-
-## 📧 联系方式
-
-- 提交 [Issue](https://github.com/xiamuceer-j/MuMuAINovel/issues)
-- Linux DO [讨论](https://linux.do/t/topic/1106333)
-- 加入QQ群 [QQ群](frontend/public/qq.jpg)
-- 加入WX群 [WX群](frontend/public/WX.png)
-
----
-
-<div align="center">
-
-**如果这个项目对你有帮助，请给个 ⭐️ Star！**
-
-Made with ❤️
-
-</div>
-
-## Star History
-
-<a href="https://star-history.dera.page/#xiamuceer-j/MuMuAINovel&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=xiamuceer-j/MuMuAINovel&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=xiamuceer-j/MuMuAINovel&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=xiamuceer-j/MuMuAINovel&type=date&legend=top-left" />
- </picture>
-</a>
-
-## History
-
-![Alt](https://repobeats.axiom.co/api/embed/ee7141a5f269c64759302e067abe23b46796bafe.svg "Repobeats analytics image")

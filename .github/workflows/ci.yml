@@ -107,7 +107,7 @@ jobs:
             -e POSTGRES_PASSWORD=testpass \
             -e SESSION_SECRET_KEY=ci-smoke-test-secret-key \
             -e CREDENTIAL_ENCRYPTION_KEY=ci-smoke-test-credential-key \
-            -e APP_NAME=AI 小说创作台 \
+            -e "APP_NAME=AI 小说创作台" \
             ai-novel:ci
           for i in $(seq 1 40); do
             if curl -fsS http://localhost:8000/health; then

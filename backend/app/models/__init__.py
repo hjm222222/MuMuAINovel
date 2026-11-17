@@ -22,6 +22,7 @@ from app.models.background_task import BackgroundTask
 from app.models.announcement import Announcement
 from app.models.project_agent import AgentConversation, AgentMessage, AgentToolCall, AgentExecutionStep
 from app.models.knowledge import KnowledgeBase, KnowledgeDocument, KnowledgeChunk
+from app.models.ai_usage import AIUsageRecord
 
 __all__ = [
     "Project",
@@ -60,4 +61,5 @@ __all__ = [
     "KnowledgeBase",
     "KnowledgeDocument",
     "KnowledgeChunk",
+    "AIUsageRecord",
 ]

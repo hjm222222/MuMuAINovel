@@ -111,6 +111,34 @@ export interface SettingsUpdate {
   preferences?: string;
 }
 
+// AI 用量统计类型定义
+export interface UsageSummary {
+  days: number;
+  totals: {
+    calls: number;
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    avg_duration_ms: number;
+    total_duration_ms: number;
+  };
+  daily: Array<{ date: string; calls: number; total_tokens: number }>;
+  by_model: Array<{ model: string; calls: number; total_tokens: number }>;
+  by_scene: Array<{ scene: string; calls: number; total_tokens: number }>;
+  recent: Array<{
+    id: string;
+    scene?: string;
+    model?: string;
+    provider?: string;
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    duration_ms: number;
+    success: boolean;
+    created_at?: string;
+  }>;
+}
+
 // API预设相关类型定义
 export interface APIKeyPresetConfig {
   api_provider: string;

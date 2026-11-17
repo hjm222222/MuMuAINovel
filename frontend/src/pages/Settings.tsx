@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Select, Slider, InputNumber, message, Space, Typography, Spin, Modal, Alert, Grid, Tabs, List, Tag, Popconfirm, Empty, Row, Col, Switch, theme } from 'antd';
-import { SaveOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, PlusOutlined, EditOutlined, CopyOutlined, PictureOutlined } from '@ant-design/icons';
+import { SaveOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, PlusOutlined, EditOutlined, CopyOutlined, PictureOutlined, LineChartOutlined } from '@ant-design/icons';
 import { settingsApi } from '../services/api';
-import type { SettingsUpdate, APIKeyPreset, PresetCreateRequest, APIKeyPresetConfig } from '../types';
+import type { SettingsUpdate, APIKeyPreset, PresetCreateRequest, APIKeyPresetConfig, UsageSummary } from '../types';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -20,6 +20,8 @@ export default function SettingsPage() {
   const [hasSettings, setHasSettings] = useState(false);
   const [isDefaultSettings, setIsDefaultSettings] = useState(false);
   const [apiKeySet, setApiKeySet] = useState(false);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
   const [modelOptions, setModelOptions] = useState<Array<{ value: string; label: string; description: string }>>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsFetched, setModelsFetched] = useState(false);
@@ -81,9 +83,23 @@ export default function SettingsPage() {
       // 清除旧的测试结果，因为可能是其他配置的测试结果
       setTestResult(null);
       setShowTestResult(false);
+    } else if (activeTab === 'usage') {
+      loadUsageSummary();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  const loadUsageSummary = async () => {
+    setUsageLoading(true);
+    try {
+      const summary = await settingsApi.getUsageSummary({ days: 30, limit: 50 });
+      setUsageSummary(summary);
+    } catch {
+      message.error('加载用量统计失败');
+    } finally {
+      setUsageLoading(false);
+    }
+  };
 
   const loadSettings = async () => {
     setInitialLoading(true);
@@ -764,6 +780,126 @@ export default function SettingsPage() {
   };
 
   // ========== 渲染预设列表 ==========
+
+  const renderUsageSummary = () => (
+    <Spin spinning={usageLoading}>
+      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <Text type="secondary">
+            近 {usageSummary?.days ?? 30} 天的模型调用统计（仅统计，不产生费用）
+          </Text>
+          <Button icon={<ReloadOutlined />} onClick={loadUsageSummary} loading={usageLoading}>
+            刷新
+          </Button>
+        </div>
+
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
+          <Col xs={12} md={6}>
+            <Card size="small">
+              <Text type="secondary">调用次数</Text>
+              <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 600 }}>
+                {usageSummary?.totals.calls ?? 0}
+              </div>
+            </Card>
+          </Col>
+          <Col xs={12} md={6}>
+            <Card size="small">
+              <Text type="secondary">总 Token</Text>
+              <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 600 }}>
+                {usageSummary?.totals.total_tokens ?? 0}
+              </div>
+            </Card>
+          </Col>
+          <Col xs={12} md={6}>
+            <Card size="small">
+              <Text type="secondary">输入 Token</Text>
+              <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 600 }}>
+                {usageSummary?.totals.prompt_tokens ?? 0}
+              </div>
+            </Card>
+          </Col>
+          <Col xs={12} md={6}>
+            <Card size="small">
+              <Text type="secondary">平均耗时</Text>
+              <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 600 }}>
+                {((usageSummary?.totals.avg_duration_ms ?? 0) / 1000).toFixed(1)}s
+              </div>
+            </Card>
+          </Col>
+        </Row>
+
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
+          <Col xs={24} md={12}>
+            <Card size="small" title="按场景统计">
+              {usageSummary && usageSummary.by_scene.length > 0 ? (
+                <List
+                  size="small"
+                  dataSource={usageSummary.by_scene}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <Text>{item.scene}</Text>
+                      <Text type="secondary">
+                        {item.calls} 次 · {item.total_tokens} tokens
+                      </Text>
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Empty description="暂无场景数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </Card>
+          </Col>
+          <Col xs={24} md={12}>
+            <Card size="small" title="按模型统计">
+              {usageSummary && usageSummary.by_model.length > 0 ? (
+                <List
+                  size="small"
+                  dataSource={usageSummary.by_model}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <Text>{item.model}</Text>
+                      <Text type="secondary">
+                        {item.calls} 次 · {item.total_tokens} tokens
+                      </Text>
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Empty description="暂无模型数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </Card>
+          </Col>
+        </Row>
+
+        <Card size="small" title="最近调用">
+          {usageSummary && usageSummary.recent.length > 0 ? (
+            <List
+              size="small"
+              dataSource={usageSummary.recent}
+              renderItem={(item) => (
+                <List.Item>
+                  <Space direction="vertical" size={0}>
+                    <Text>{item.scene || '未标注场景'} · {item.model || '未知模型'}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {item.created_at ? new Date(item.created_at).toLocaleString() : ''}
+                    </Text>
+                  </Space>
+                  <Space>
+                    <Tag color={item.success ? 'green' : 'red'}>{item.success ? '成功' : '失败'}</Tag>
+                    <Text type="secondary">
+                      {item.total_tokens} tokens · {(item.duration_ms / 1000).toFixed(1)}s
+                    </Text>
+                  </Space>
+                </List.Item>
+              )}
+            />
+          ) : (
+            <Empty description="暂无调用记录" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          )}
+        </Card>
+      </Space>
+    </Spin>
+  );
 
   const renderPresetsList = () => (
     <Spin spinning={presetsLoading}>
@@ -1637,6 +1773,11 @@ export default function SettingsPage() {
                   key: 'presets',
                   label: <Space size={6}><CopyOutlined />配置预设</Space>,
                   children: renderPresetsList(),
+                },
+                {
+                  key: 'usage',
+                  label: <Space size={6}><LineChartOutlined />用量统计</Space>,
+                  children: renderUsageSummary(),
                 },
               ]}
             />

@@ -16,6 +16,7 @@ from app.logger import setup_logging, get_logger
 from app.middleware import RequestIDMiddleware
 from app.middleware.auth_middleware import AuthMiddleware
 from app.mcp import mcp_client, register_status_sync
+from app.services.usage_service import current_usage_scene, scene_from_path
 
 setup_logging(
     level=config_settings.log_level,
@@ -173,6 +174,27 @@ else:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
+class UsageSceneMiddleware:
+    """按请求路径标记用量场景（纯 ASGI 实现，不影响 SSE 流式响应）。"""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+
+        token = current_usage_scene.set(scene_from_path(scope.get("path", "")))
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            current_usage_scene.reset(token)
+
+
+app.add_middleware(UsageSceneMiddleware)
 
 
 @app.get("/health")

@@ -72,6 +72,7 @@ import type {
   AgentToolCall,
   AgentToolDecision,
   AgentExecutionStep,
+  UsageSummary,
 } from '../types';
 
 interface MCPPluginSimpleCreate {
@@ -242,6 +243,9 @@ export const settingsApi = {
     api.put<unknown, Settings>('/settings', data),
 
   deleteSettings: () => api.delete<unknown, { message: string; user_id: string }>('/settings'),
+
+  getUsageSummary: (params?: { days?: number; limit?: number }) =>
+    api.get<unknown, UsageSummary>('/settings/usage/summary', { params }),
 
   getAvailableModels: (params: { api_key?: string; api_base_url?: string; provider: string }) =>
     api.get<unknown, { provider: string; models: Array<{ value: string; label: string; description: string }>; count?: number }>('/settings/models', { params }),

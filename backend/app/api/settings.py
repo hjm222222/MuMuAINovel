@@ -428,6 +428,20 @@ async def get_settings(
     return _settings_response(settings)
 
 
+@router.get("/usage/summary")
+async def get_usage_summary(
+    days: int = 30,
+    limit: int = 50,
+    user: User = Depends(require_login),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取当前用户的 AI 用量统计（仅统计，不计费）。"""
+    from app.services.usage_service import get_usage_summary as summarize_usage
+
+    summary = await summarize_usage(db, user_id=user.user_id, days=days, limit=limit)
+    return summary
+
+
 @router.post("/cover/test")
 async def test_cover_settings(
     data: CoverSettingsTestRequest,

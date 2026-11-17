@@ -218,6 +218,35 @@ class AIService:
         else:
             logger.error(message)
 
+    async def _persist_usage_record(
+        self,
+        metrics: AICallMetrics,
+        scene: Optional[str] = None,
+    ) -> None:
+        """落库本次调用的 token 与耗时统计（仅统计，不计费）。"""
+        if not self.user_id or not self.db_session:
+            return
+
+        try:
+            from app.services.usage_service import current_usage_scene, record_ai_usage
+
+            scene = scene or current_usage_scene.get()
+            await record_ai_usage(
+                self.db_session,
+                user_id=self.user_id,
+                provider=metrics.provider,
+                model=metrics.model,
+                scene=scene or metrics.request_mode,
+                prompt_tokens=metrics.usage.prompt_tokens,
+                completion_tokens=metrics.usage.completion_tokens,
+                total_tokens=metrics.usage.total_tokens,
+                duration_ms=metrics.duration_ms,
+                success=metrics.success,
+                commit=False,
+            )
+        except Exception as exc:
+            logger.warning(f"记录AI用量失败（已忽略）: {exc}")
+
     async def _prepare_mcp_tools(self, auto_mcp: bool = True, force_refresh: bool = False) -> Optional[List[Dict]]:
         """
         预处理MCP工具
@@ -412,6 +441,7 @@ class AIService:
         auto_mcp: bool = True,
         handle_tool_calls: bool = True,
         mcp_max_rounds: Optional[int] = None,
+        usage_scene: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         生成文本（自动支持MCP工具）
@@ -428,6 +458,7 @@ class AIService:
             auto_mcp: 是否自动加载MCP工具（默认True）
             handle_tool_calls: 是否自动处理工具调用（默认True）
             mcp_max_rounds: 最大工具调用轮数（None使用默认值3）
+            usage_scene: 用量统计场景标签（如"章节生成"）
             
         Returns:
             包含生成内容的字典
@@ -488,10 +519,12 @@ class AIService:
                 usage=usage,
             )
             self._log_call_metrics(metrics)
+            await self._persist_usage_record(metrics, usage_scene)
             return response
         except Exception as e:
             metrics.finish(success=False, error=e)
             self._log_call_metrics(metrics)
+            await self._persist_usage_record(metrics, usage_scene)
             raise
 
     async def generate_text_stream(
@@ -505,6 +538,7 @@ class AIService:
         tool_choice: Optional[str] = None,
         auto_mcp: bool = True,
         mcp_max_rounds: Optional[int] = None,
+        usage_scene: Optional[str] = None,
     ) -> AsyncGenerator[str, None]:
         """
         流式生成文本（自动支持MCP工具）
@@ -582,6 +616,7 @@ class AIService:
                 usage=latest_usage,
             )
             self._log_call_metrics(metrics)
+            await self._persist_usage_record(metrics, usage_scene)
         except Exception as e:
             metrics.finish(
                 success=False,
@@ -591,6 +626,7 @@ class AIService:
                 error=e,
             )
             self._log_call_metrics(metrics)
+            await self._persist_usage_record(metrics, usage_scene)
             raise
 
     async def call_with_json_retry(
@@ -604,6 +640,7 @@ class AIService:
         model: Optional[str] = None,
         expected_type: Optional[str] = None,
         auto_mcp: bool = True,
+        usage_scene: Optional[str] = None,
     ) -> Union[Dict, List]:
         """
         带重试的 JSON 调用（自动支持MCP工具）
@@ -618,6 +655,7 @@ class AIService:
             model: 模型名称
             expected_type: 期望的返回类型（"object"或"array"）
             auto_mcp: 是否自动加载MCP工具
+            usage_scene: 用量统计场景标签
             
         Returns:
             解析后的JSON数据
@@ -647,6 +685,7 @@ class AIService:
                     system_prompt=system_prompt,
                     auto_mcp=auto_mcp,
                     handle_tool_calls=True,
+                    usage_scene=usage_scene,
                 )
                 aggregate_usage.add(TokenUsage.from_response(result))
                 metrics.retry_count = attempt

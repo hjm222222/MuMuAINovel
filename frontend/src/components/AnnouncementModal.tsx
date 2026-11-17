@@ -1,5 +1,4 @@
 import { Modal, Button, Space, theme } from 'antd';
-import { useEffect, useState } from 'react';
 
 interface AnnouncementModalProps {
   visible: boolean;
@@ -8,18 +7,52 @@ interface AnnouncementModalProps {
   onNeverShow: () => void;
 }
 
+const NOTICE_ITEMS = [
+  {
+    title: '站点性质',
+    content: '本站是公益性质的 AI 小说创作工具，只提供创作功能，不设书城、阅读、评论、付费会员与打赏，不向用户收取任何费用。',
+  },
+  {
+    title: '依法使用',
+    content: '请遵守《中华人民共和国网络安全法》《网络信息内容生态治理规定》《出版管理条例》等法律法规以及你所在地区的相关规定。',
+  },
+  {
+    title: '禁止内容',
+    content: '不得利用本站创作、导入、存储或传播违法违规信息，包括危害国家安全、泄露国家秘密、煽动民族仇恨与地域歧视、淫秽色情、暴力恐怖、赌博诈骗、侵犯他人隐私与名誉、侵犯著作权等内容。',
+  },
+  {
+    title: '内容责任',
+    content: '作品由创作者本人完成并承担全部责任。AI 生成内容仅作辅助参考，请经人工审校后再对外发布或商用。',
+  },
+  {
+    title: '版权归属',
+    content: '作品著作权归创作者本人所有；请勿导入或上传你未获得授权的第三方作品。',
+  },
+  {
+    title: '未成年人保护',
+    content: '未成年人应在监护人指导下使用本站，不得生成不适宜其年龄的内容。',
+  },
+  {
+    title: '模型与费用',
+    content: '本站不承担模型调用费用，模型服务与 API Key 由你自行配置和保管；平台对密钥加密存储，接口只返回掩码，不回显明文。',
+  },
+  {
+    title: '数据与隐私',
+    content: '你可以随时在「设置 - 数据与隐私」中导出或删除自己的创作数据。',
+  },
+  {
+    title: '违规处理',
+    content: '对违法违规内容，本站有权删除相关内容并停止提供服务；情节严重的，将依法向有关部门报告。',
+  },
+  {
+    title: '免责声明',
+    content: '因用户违反法律法规或本须知造成的任何后果，由用户自行承担。',
+  },
+];
+
 export default function AnnouncementModal({ visible, onClose, onDoNotShowToday, onNeverShow }: AnnouncementModalProps) {
-  const [qqImageError, setQqImageError] = useState(false);
-  const [wxImageError, setWxImageError] = useState(false);
   const { token } = theme.useToken();
   const alphaColor = (color: string, alpha: number) => `color-mix(in srgb, ${color} ${(alpha * 100).toFixed(0)}%, transparent)`;
-
-  useEffect(() => {
-    if (visible) {
-      setQqImageError(false);
-      setWxImageError(false);
-    }
-  }, [visible]);
 
   const handleDoNotShowToday = () => {
     onDoNotShowToday();
@@ -40,7 +73,7 @@ export default function AnnouncementModal({ visible, onClose, onDoNotShowToday, 
           color: token.colorPrimary,
           textAlign: 'center',
         }}>
-          🎉 欢迎使用 AI小说创作助手
+          使用须知与合规承诺
         </div>
       }
       open={visible}
@@ -56,7 +89,7 @@ export default function AnnouncementModal({ visible, onClose, onDoNotShowToday, 
               fontSize: '14px',
             }}
           >
-            今日内不再展示
+            今日不再提示
           </Button>
           <Button
             type="primary"
@@ -71,7 +104,7 @@ export default function AnnouncementModal({ visible, onClose, onDoNotShowToday, 
               boxShadow: `0 8px 20px ${alphaColor(token.colorPrimary, 0.32)}`,
             }}
           >
-            永不再展示
+            同意并继续
           </Button>
         </Space>
       }
@@ -81,6 +114,8 @@ export default function AnnouncementModal({ visible, onClose, onDoNotShowToday, 
         body: {
           padding: '20px',
           background: token.colorBgContainer,
+          maxHeight: '62vh',
+          overflowY: 'auto',
         },
         header: {
           background: `linear-gradient(135deg, ${alphaColor(token.colorPrimary, 0.1)} 0%, ${alphaColor(token.colorBgContainer, 0.98)} 100%)`,
@@ -94,151 +129,42 @@ export default function AnnouncementModal({ visible, onClose, onDoNotShowToday, 
         },
       }}
     >
-      <div style={{ textAlign: 'center' }}>
-        <div style={{
-          marginBottom: '12px',
-          fontSize: '15px',
+      <div>
+        <p style={{
+          marginBottom: '14px',
+          fontSize: '14px',
           color: token.colorTextSecondary,
-          lineHeight: '1.5',
+          lineHeight: '1.7',
         }}>
-          <p style={{ marginBottom: '8px' }}>👋 欢迎加入我们的交流群！在这里你可以：</p>
-          <ul style={{
-            textAlign: 'left',
-            marginLeft: '40px',
-            marginTop: '0',
-            marginBottom: '12px',
-          }}>
-            <li>💬 与其他创作者交流心得</li>
-            <li>💡 获取最新功能更新和使用技巧</li>
-            <li>🐛 反馈问题和建议</li>
-            <li>📚 分享创作经验和灵感</li>
-          </ul>
-          <p style={{ fontWeight: 600, color: token.colorText, marginBottom: '12px' }}>
-            扫描下方二维码加入交流群：
-          </p>
-        </div>
+          本站是公益性质的 AI 小说创作工具站点，请阅读以下条款后再继续使用。
+        </p>
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          gap: '24px',
-          padding: '16px',
-          background: token.colorBgLayout,
-          borderRadius: '8px',
-          flexWrap: 'wrap',
+        <ol style={{
+          margin: 0,
+          paddingLeft: '20px',
+          fontSize: '14px',
+          lineHeight: '1.75',
+          color: token.colorText,
         }}>
-          {/* QQ 二维码 */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            minWidth: '200px',
-          }}>
-            <p style={{ fontWeight: 600, color: token.colorText, marginBottom: '8px', fontSize: '14px' }}>
-              QQ交流群
-            </p>
-            {!qqImageError ? (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                background: token.colorBgContainer,
-                borderRadius: '8px',
-                padding: '6px',
-                boxShadow: `0 2px 8px ${alphaColor(token.colorText, 0.12)}`,
-              }}>
-                <img
-                  src="/qq.jpg"
-                  alt="QQ交流群二维码"
-                  style={{
-                    maxWidth: '180px',
-                    maxHeight: '180px',
-                    width: 'auto',
-                    height: 'auto',
-                    display: 'block',
-                    objectFit: 'contain',
-                  }}
-                  onError={() => setQqImageError(true)}
-                />
-              </div>
-            ) : (
-              <div style={{
-                width: '180px',
-                height: '180px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                background: token.colorBgContainer,
-                borderRadius: '8px',
-                color: token.colorTextTertiary,
-              }}>
-                <p>二维码加载失败</p>
-              </div>
-            )}
-          </div>
-
-          {/* 微信二维码 */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            minWidth: '200px',
-          }}>
-            <p style={{ fontWeight: 600, color: token.colorText, marginBottom: '8px', fontSize: '14px' }}>
-              微信交流群
-            </p>
-            {!wxImageError ? (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                background: token.colorBgContainer,
-                borderRadius: '8px',
-                padding: '6px',
-                boxShadow: `0 2px 8px ${alphaColor(token.colorText, 0.12)}`,
-              }}>
-                <img
-                  src="/WX.png"
-                  alt="微信交流群二维码"
-                  style={{
-                    maxWidth: '180px',
-                    maxHeight: '180px',
-                    width: 'auto',
-                    height: 'auto',
-                    display: 'block',
-                    objectFit: 'contain',
-                  }}
-                  onError={() => setWxImageError(true)}
-                />
-              </div>
-            ) : (
-              <div style={{
-                width: '180px',
-                height: '180px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                background: token.colorBgContainer,
-                borderRadius: '8px',
-                color: token.colorTextTertiary,
-              }}>
-                <p>二维码加载失败</p>
-              </div>
-            )}
-          </div>
-        </div>
+          {NOTICE_ITEMS.map((item) => (
+            <li key={item.title} style={{ marginBottom: '10px' }}>
+              <span style={{ fontWeight: 600 }}>{item.title}：</span>
+              <span style={{ color: token.colorTextSecondary }}>{item.content}</span>
+            </li>
+          ))}
+        </ol>
 
         <div style={{
           marginTop: '16px',
-          padding: '10px',
-          background: token.colorWarningBg,
+          padding: '10px 12px',
+          background: token.colorFillTertiary,
           borderRadius: '8px',
-          border: `1px solid ${token.colorWarningBorder}`,
+          border: `1px solid ${token.colorBorderSecondary}`,
           fontSize: '13px',
-          color: token.colorWarning,
+          color: token.colorTextSecondary,
+          lineHeight: '1.6',
         }}>
-          💡 提示：选择"今日内不再展示"当天不再显示，选择"永不再展示"将永久隐藏此公告
+          点击「同意并继续」表示你已阅读并同意上述条款，此后不再弹出本提示；选择「今日不再提示」则当天内不再展示。
         </div>
       </div>
     </Modal>

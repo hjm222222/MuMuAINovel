@@ -28,6 +28,9 @@ class WorkshopClient:
         user_identifier: Optional[str] = None
     ) -> Dict[str, Any]:
         """发送请求到云端"""
+        if not settings.CLOUD_SERVICES_ENABLED:
+            raise WorkshopClientError("云端服务已禁用，提示词工坊仅在本版本下线")
+
         headers = {
             "X-Instance-ID": INSTANCE_ID,
             "Content-Type": "application/json"

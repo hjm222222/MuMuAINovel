@@ -27,6 +27,9 @@ class AnnouncementClient:
         json: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """发送请求到云端公告服务"""
+        if not settings.CLOUD_SERVICES_ENABLED:
+            raise AnnouncementClientError("云端服务已禁用，请使用本地公告")
+
         headers = {
             "X-Instance-ID": INSTANCE_ID,
             "Content-Type": "application/json",

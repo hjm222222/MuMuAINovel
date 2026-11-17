@@ -251,7 +251,9 @@ async def get_status():
 
     if not is_workshop_server():
         result["cloud_url"] = settings.WORKSHOP_CLOUD_URL
-        result["cloud_connected"] = await announcement_client.check_connection()
+        result["cloud_connected"] = False
+        if settings.CLOUD_SERVICES_ENABLED:
+            result["cloud_connected"] = await announcement_client.check_connection()
 
     return result
 
@@ -263,7 +265,7 @@ async def get_announcements(
     db: AsyncSession = Depends(get_global_db),
 ):
     """获取公告列表（公开接口）"""
-    if is_workshop_server():
+    if is_workshop_server() or not settings.CLOUD_SERVICES_ENABLED:
         return await _get_announcements_local(db, page=page, limit=limit)
 
     try:
@@ -279,7 +281,7 @@ async def sync_announcements(
     db: AsyncSession = Depends(get_global_db),
 ):
     """同步公告（公开接口）"""
-    if is_workshop_server():
+    if is_workshop_server() or not settings.CLOUD_SERVICES_ENABLED:
         return await _sync_announcements_local(db, since=since, limit=limit)
 
     try:

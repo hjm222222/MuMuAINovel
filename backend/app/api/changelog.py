@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 import logging
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -21,8 +23,8 @@ def require_login(request: Request):
 
 # GitHub API配置
 GITHUB_API_BASE = "https://api.github.com"
-REPO_OWNER = "xiamuceer-j"
-REPO_NAME = "MuMuAINovel"
+REPO_OWNER = settings.CHANGELOG_REPO_OWNER
+REPO_NAME = settings.CHANGELOG_REPO_NAME
 
 # 缓存配置
 _cache = {
@@ -111,13 +113,17 @@ async def get_changelog(
 ):
     """
     获取更新日志
-    
+
     从GitHub获取项目的提交历史，支持缓存以减少API调用
-    
+
     - **page**: 页码，从1开始
     - **per_page**: 每页返回的提交数量，最大100
     """
+    if not settings.CHANGELOG_ENABLED:
+        raise HTTPException(status_code=404, detail="更新日志已关闭")
+
     try:
+
         # 只缓存第一页
         if page == 1 and is_cache_valid():
             logger.info("使用缓存的更新日志")

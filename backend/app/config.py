@@ -154,6 +154,13 @@ class Settings(BaseSettings):
     WORKSHOP_MODE: str = "client"  # client: 本地部署实例, server: 云端中央服务器
     WORKSHOP_CLOUD_URL: str = "https://mumuverse.space:1566"  # 云端服务地址
     WORKSHOP_API_TIMEOUT: int = 30  # 云端API请求超时时间（秒）
+    # 云端服务开关：本项目为独立部署，默认关闭对上游云服务的调用
+    CLOUD_SERVICES_ENABLED: bool = False
+
+    # 更新日志来源（默认指向本 fork，可关闭）
+    CHANGELOG_ENABLED: bool = True
+    CHANGELOG_REPO_OWNER: str = "hjm222222"
+    CHANGELOG_REPO_NAME: str = "MuMuAINovel"
     
     class Config:
         env_file = ".env"

@@ -60,3 +60,62 @@ jobs:
 
       - name: Build (tsc + vite)
         run: npm run build
+
+  image:
+    name: Docker image build + startup
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: ai_novel
+          POSTGRES_USER: ainovel
+          POSTGRES_PASSWORD: testpass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ainovel -d ai_novel"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: ai-novel:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start container and verify health endpoint
+        run: |
+          docker run -d --name ai-novel-ci --network host \
+            -e DATABASE_URL=postgresql+asyncpg://ainovel:testpass@localhost:5432/ai_novel \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e POSTGRES_USER=ainovel \
+            -e POSTGRES_DB=ai_novel \
+            -e POSTGRES_PASSWORD=testpass \
+            -e SESSION_SECRET_KEY=ci-smoke-test-secret-key \
+            -e CREDENTIAL_ENCRYPTION_KEY=ci-smoke-test-credential-key \
+            -e APP_NAME=AI 小说创作台 \
+            ai-novel:ci
+          for i in $(seq 1 40); do
+            if curl -fsS http://localhost:8000/health; then
+              echo ""
+              echo "health check ok"
+              exit 0
+            fi
+            sleep 5
+          done
+          docker logs ai-novel-ci
+          exit 1

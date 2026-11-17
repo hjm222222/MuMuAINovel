@@ -63,7 +63,6 @@ export default function ProAppShell({
       layout="side"
       navTheme="light"
       siderWidth={216}
-      collapsedWidth={64}
       fixSiderbar
       fixedHeader={false}
       headerRender={false}

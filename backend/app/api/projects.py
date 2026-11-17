@@ -30,6 +30,10 @@ from app.schemas.import_export import (
     ImportResult
 )
 from app.services.import_export_service import ImportExportService
+from app.services.manuscript_export_service import (
+    build_manuscript_for_user,
+    get_manuscript_media_type,
+)
 from app.services.memory_service import memory_service
 from app.logger import get_logger
 from app.utils.data_consistency import (
@@ -669,6 +673,64 @@ async def export_project_data(
         raise
     except Exception as e:
         logger.error(f"导出项目数据失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+
+
+@router.get("/{project_id}/export-manuscript", summary="导出全书稿件为Markdown/TXT")
+async def export_project_manuscript(
+    project_id: str,
+    request: Request,
+    format: str = "markdown",
+    include_appendix: bool = True,
+    include_draft: bool = True,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    导出全书稿件（Markdown / TXT）
+
+    Args:
+        project_id: 项目ID
+        format: markdown 或 txt
+        include_appendix: 是否附带大纲与角色附录
+        include_draft: 是否包含草稿章节
+
+    Returns:
+        稿件文件下载
+    """
+    user_id = getattr(request.state, 'user_id', None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="未登录")
+
+    try:
+        manuscript = await build_manuscript_for_user(
+            db,
+            project_id=project_id,
+            user_id=user_id,
+            format=format,
+            include_appendix=include_appendix,
+            include_draft=include_draft,
+        )
+        if manuscript is None:
+            raise HTTPException(status_code=404, detail="项目不存在")
+
+        content, filename = manuscript
+        encoded_filename = quote(filename)
+
+        logger.info(f"全书稿件导出成功: {filename}")
+
+        return Response(
+            content=content.encode('utf-8'),
+            media_type=get_manuscript_media_type(format),
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
+        )
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"导出全书稿件失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
 
 

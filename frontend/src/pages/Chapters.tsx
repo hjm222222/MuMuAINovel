@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { List, Button, Modal, Form, Input, Select, message, Empty, Space, Badge, Tag, Card, InputNumber, Alert, Radio, Descriptions, Collapse, Popconfirm, Pagination, theme } from 'antd';
+import { List, Button, Modal, Form, Input, Select, message, Empty, Space, Badge, Tag, Card, InputNumber, Alert, Radio, Descriptions, Collapse, Popconfirm, Pagination, theme, Switch } from 'antd';
 import { EditOutlined, FileTextOutlined, ThunderboltOutlined, LockOutlined, DownloadOutlined, SettingOutlined, FundOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined, RocketOutlined, StopOutlined, InfoCircleOutlined, CaretRightOutlined, DeleteOutlined, BookOutlined, FormOutlined, PlusOutlined, ReadOutlined } from '@ant-design/icons';
 import { useStore } from '../store';
 import { eventBus, EventNames } from '../store/eventBus';
@@ -57,6 +57,9 @@ export default function Chapters() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form] = Form.useForm();
   const [editorForm] = Form.useForm();
+  const [exportForm] = Form.useForm();
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportingManuscript, setExportingManuscript] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const contentTextAreaRef = useRef<TextAreaRef>(null);
   const [writingStyles, setWritingStyles] = useState<WritingStyle[]>([]);
@@ -1089,22 +1092,37 @@ export default function Chapters() {
       message.warning('当前项目没有章节，无法导出');
       return;
     }
+    setExportModalOpen(true);
+  };
 
-    modal.confirm({
-      title: '导出项目章节',
-      content: `确定要将《${currentProject.title}》的所有章节导出为TXT文件吗？`,
-      centered: true,
-      okText: '确定导出',
-      cancelText: '取消',
-      onOk: () => {
-        try {
-          projectApi.exportProject(currentProject.id);
-          message.success('开始下载导出文件');
-        } catch {
-          message.error('导出失败，请重试');
-        }
-      },
-    });
+  const handleExportLegacyTxt = () => {
+    try {
+      projectApi.exportProject(currentProject.id);
+      message.success('开始下载章节纯文本文件');
+    } catch {
+      message.error('导出失败，请重试');
+    }
+  };
+
+  const handleConfirmManuscriptExport = async () => {
+    let values: { format: 'markdown' | 'txt'; include_appendix: boolean; include_draft: boolean };
+    try {
+      values = await exportForm.validateFields();
+    } catch {
+      return;
+    }
+
+    setExportingManuscript(true);
+    try {
+      await projectApi.exportProjectManuscript(currentProject.id, values);
+      message.success('全书稿件已开始下载');
+      setExportModalOpen(false);
+    } catch (error) {
+      const detail = (error as ApiError)?.response?.data?.detail;
+      message.error(detail || '导出失败，请重试');
+    } finally {
+      setExportingManuscript(false);
+    }
   };
 
   const handleShowAnalysis = (chapterId: string) => {
@@ -2057,7 +2075,7 @@ export default function Chapters() {
             block={isMobile}
             size={isMobile ? 'middle' : 'middle'}
           >
-            导出为TXT
+            导出全书
           </Button>
         </Space>
       </div>
@@ -3104,6 +3122,51 @@ export default function Chapters() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* 全书导出弹窗 */}
+      <Modal
+        title="导出全书稿件"
+        open={exportModalOpen}
+        onCancel={() => setExportModalOpen(false)}
+        onOk={handleConfirmManuscriptExport}
+        okText="导出"
+        cancelText="取消"
+        confirmLoading={exportingManuscript}
+        destroyOnHidden
+      >
+        <Form
+          form={exportForm}
+          layout="vertical"
+          initialValues={{
+            format: 'markdown',
+            include_appendix: true,
+            include_draft: true,
+          }}
+        >
+          <Form.Item name="format" label="文件格式">
+            <Radio.Group>
+              <Radio.Button value="markdown">Markdown</Radio.Button>
+              <Radio.Button value="txt">TXT</Radio.Button>
+            </Radio.Group>
+          </Form.Item>
+          <Form.Item name="include_appendix" label="附加大纲与角色表" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+          <Form.Item name="include_draft" label="包含草稿章节" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+        </Form>
+        <Alert
+          type="info"
+          showIcon
+          message="需要把稿件重新导入本系统时，请使用章节纯文本导出。"
+          action={
+            <Button size="small" onClick={handleExportLegacyTxt}>
+              导出章节纯文本
+            </Button>
+          }
+        />
       </Modal>
 
       {/* 单章节生成进度显示 */}

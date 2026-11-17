@@ -445,6 +445,39 @@ export const projectApi = {
     window.URL.revokeObjectURL(url);
   },
 
+  // 导出全书稿件（Markdown / TXT）
+  exportProjectManuscript: async (id: string, options?: {
+    format?: 'markdown' | 'txt';
+    include_appendix?: boolean;
+    include_draft?: boolean;
+  }) => {
+    const response = await axios.get(
+      `/api/projects/${id}/export-manuscript`,
+      {
+        params: options,
+        responseType: 'blob',
+      }
+    );
+
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = options?.format === 'txt' ? 'novel.txt' : 'novel.md';
+    if (contentDisposition) {
+      const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
+      if (matches && matches[1]) {
+        filename = decodeURIComponent(matches[1]);
+      }
+    }
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
   // 验证导入文件
   validateImportFile: (file: File) => {
     const formData = new FormData();

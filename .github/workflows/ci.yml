@@ -61,11 +61,11 @@ jobs:
       - name: Build (tsc + vite)
         run: npm run build
 
-      - name: Upload frontend dist artifact
+      - name: Upload frontend build artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: frontend/dist
+          path: backend/static
           retention-days: 7
 
   image:

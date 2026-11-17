@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Card, Button, Modal, message, Spin, Space, Tag, Typography, Upload, Checkbox, Tooltip, Drawer, Menu, theme, Badge } from 'antd';
+import { Card, Button, Modal, message, Spin, Space, Tag, Typography, Upload, Checkbox, Tooltip, theme, Badge } from 'antd';
 import { EditOutlined, BookOutlined, CalendarOutlined, FileTextOutlined, TrophyOutlined, SettingOutlined, UploadOutlined, FileSearchOutlined, MenuUnfoldOutlined, MenuFoldOutlined, BulbOutlined, MoonOutlined, DesktopOutlined, MailOutlined, BellOutlined } from '@ant-design/icons';
 import { authApi, projectApi } from '../services/api';
 import { useStore } from '../store';
@@ -20,6 +20,8 @@ import BookshelfPage from './BookshelfPage';
 import { getStoredSidebarCollapsed, setStoredSidebarCollapsed } from '../utils/sidebarState';
 import AnnouncementTimelineModal from '../components/AnnouncementTimelineModal';
 import { useAnnouncements } from '../hooks/useAnnouncements';
+import ProAppShell from '../layout/ProAppShell';
+import type { ShellMenuItem } from '../layout/ProAppShell';
 
 const { Text } = Typography;
 
@@ -57,7 +59,6 @@ export default function ProjectList() {
   const navigate = useNavigate();
   const location = useLocation();
   const { projects, loading } = useStore();
-  const [drawerVisible, setDrawerVisible] = useState(false);
   const [announcementVisible, setAnnouncementVisible] = useState(false);
   const [collapsed, setCollapsed] = useState<boolean>(() => getStoredSidebarCollapsed());
   const [modal, contextHolder] = Modal.useModal();
@@ -110,8 +111,6 @@ export default function ProjectList() {
       { replace: false }
     );
   }, [location.pathname, location.search, navigate]);
-
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     refreshProjects();
@@ -381,9 +380,6 @@ export default function ProjectList() {
 
   const isMobile = window.innerWidth <= 768;
   const headerHeight = isMobile ? 56 : 70;
-  const expandedSiderWidth = 220;
-  const collapsedSiderWidth = 60;
-  const desktopSiderWidth = collapsed ? collapsedSiderWidth : expandedSiderWidth;
 
   const currentViewTitle = activeView === 'projects'
     ? '我的书架'
@@ -397,296 +393,174 @@ export default function ProjectList() {
 
   const isAdmin = !!currentUser?.is_admin;
 
-  const sideMenuItems = [
+  const shellMenuItems: ShellMenuItem[] = [
     {
+      path: 'projects',
       key: 'projects',
+      name: '我的书架',
       icon: <BookOutlined />,
-      label: '我的书架',
     },
     {
-      type: 'group' as const,
-      label: '创作工具',
-      children: [
-        {
-          key: 'book-import',
-          icon: <UploadOutlined />,
-          label: '拆书导入',
-        },
-        {
-          key: 'prompts',
-          icon: <FileSearchOutlined />,
-          label: '提示词管理',
-        },
-      ],
-    },
-    {
-      type: 'group' as const,
-      label: '系统设置',
-      children: [
-        {
-          key: 'settings',
-          icon: <SettingOutlined />,
-          label: 'API 设置',
-        },
-        ...(isAdmin ? [{
-          key: 'system-settings',
-          icon: <MailOutlined />,
-          label: '系统设置',
-        }] : []),
-      ],
-    },
-  ];
-
-  const sideMenuItemsCollapsed = [
-    {
-      key: 'projects',
-      icon: <BookOutlined />,
-      label: '我的书架',
-    },
-    {
+      path: 'book-import',
       key: 'book-import',
+      name: '拆书导入',
       icon: <UploadOutlined />,
-      label: '拆书导入',
     },
     {
+      path: 'prompts',
       key: 'prompts',
+      name: '提示词管理',
       icon: <FileSearchOutlined />,
-      label: '提示词管理',
     },
     {
+      path: 'settings',
       key: 'settings',
+      name: 'API 设置',
       icon: <SettingOutlined />,
-      label: 'API 设置',
     },
     ...(isAdmin ? [{
+      path: 'system-settings',
       key: 'system-settings',
+      name: '系统设置',
       icon: <MailOutlined />,
-      label: '系统设置',
     }] : []),
   ];
 
-  return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: token.colorBgLayout,
-      overflow: 'hidden'
-    }}>
-      {contextHolder}
 
-      {!isMobile && (
-        <div
+  const renderBrand = (isCollapsed: boolean) => (
+    <div style={{
+      height: headerHeight,
+      display: 'flex',
+      alignItems: 'center',
+      padding: isCollapsed ? 0 : '0 18px',
+      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+      justifyContent: isCollapsed ? 'center' : 'space-between',
+      gap: 8,
+    }}>
+      {isCollapsed ? (
+        <Button
+          type="text"
+          icon={<MenuUnfoldOutlined />}
+          onClick={() => setCollapsed(false)}
           style={{
-          width: desktopSiderWidth,
-          background: token.colorBgContainer,
-          borderRight: `1px solid ${token.colorBorderSecondary}`,
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          height: '100vh',
-          overflow: 'hidden',
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          zIndex: 1000
-        }}>
-          <div style={{
-            height: headerHeight,
+            color: token.colorTextSecondary,
+            width: '100%',
+            height: '100%',
+            padding: 0,
+            borderRadius: 0,
             display: 'flex',
             alignItems: 'center',
-            padding: collapsed ? 0 : '0 18px',
-            background: 'transparent',
-            borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            flexShrink: 0,
-            justifyContent: collapsed ? 'center' : 'space-between',
-            gap: 8
-          }}>
-            {collapsed ? (
-              <Button
-                type="text"
-                icon={<MenuUnfoldOutlined />}
-                onClick={() => setCollapsed(false)}
-                style={{
-                  color: token.colorTextSecondary,
-                  width: '100%',
-                  height: '100%',
-                  padding: 0,
-                  borderRadius: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              />
-            ) : (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0, overflow: 'hidden' }}>
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    background: `linear-gradient(140deg, ${token.colorPrimary} 0%, ${alphaColor(token.colorPrimary, 0.72)} 100%)`,
-                    borderRadius: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: token.colorWhite,
-                    fontSize: 15,
-                    boxShadow: `0 8px 16px -10px ${alphaColor(token.colorPrimary, 0.9)}`,
-                  }}>
-                    <BookOutlined />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <span
-                      className="app-display"
-                      style={{
-                        color: token.colorText,
-                        fontWeight: 600,
-                        fontSize: 15,
-                        lineHeight: 1.25,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {branding.app_name}
-                    </span>
-                    <span style={{ fontSize: 10, letterSpacing: '0.18em', color: token.colorTextTertiary, textTransform: 'uppercase' }}>
-                      Writing Studio
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  type="text"
-                  icon={<MenuFoldOutlined />}
-                  onClick={() => setCollapsed(true)}
-                  style={{
-                    color: token.colorTextTertiary,
-                    width: 30,
-                    height: 30,
-                    padding: 0,
-                    flexShrink: 0
-                  }}
-                />
-              </>
-            )}
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-            <Menu
-              mode="inline"
-              inlineCollapsed={collapsed}
-              selectedKeys={[activeView]}
-              style={{ borderRight: 0, paddingTop: 12, width: '100%' }}
-              onClick={({ key }) => {
-                changeView(key as ProjectListView);
-              }}
-              items={collapsed ? sideMenuItemsCollapsed : sideMenuItems}
-            />
-          </div>
-
-          <div style={{
-            padding: collapsed ? '12px 8px' : 16,
-            borderTop: `1px solid ${token.colorBorderSecondary}`,
-            flexShrink: 0
-          }}>
-            {collapsed ? (
-              <Space direction="vertical" style={{ width: '100%', alignItems: 'center' }} size={10}>
-                <Button
-                  type="text"
-                  icon={collapsedThemeIcon}
-                  onClick={cycleThemeMode}
-                  title={`主题模式：${mode === 'light' ? '浅色' : mode === 'dark' ? '深色' : '跟随系统'}（点击切换）`}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    background: alphaColor(token.colorBgContainer, 0.65),
-                    border: `1px solid ${token.colorBorder}`,
-                    color: token.colorTextSecondary,
-                  }}
-                />
-                <UserMenu compact />
-              </Space>
-            ) : (
-              <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: token.colorTextTertiary }}>
-                  <span>主题模式</span>
-                  <span>{resolvedMode === 'dark' ? '深色' : '浅色'}</span>
-                </div>
-                <ThemeSwitch block />
-                <UserMenu />
-              </Space>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div style={{
-        background: alphaColor(token.colorBgContainer, 0.86),
-        backdropFilter: 'blur(18px) saturate(150%)',
-        WebkitBackdropFilter: 'blur(18px) saturate(150%)',
-        borderBottom: `1px solid ${token.colorBorderSecondary}`,
-        padding: isMobile ? '0 12px' : '0 28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        position: 'fixed',
-        top: 0,
-        left: isMobile ? 0 : desktopSiderWidth,
-        right: 0,
-        zIndex: 1000,
-        height: headerHeight,
-        flexShrink: 0,
-        transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        overflow: 'hidden'
-      }}>
-        {isMobile ? (
-          <>
-            <Button
-              type="text"
-              icon={<MenuUnfoldOutlined />}
-              onClick={() => setDrawerVisible(true)}
-              style={{
-                fontSize: 18,
-                color: token.colorText,
-                width: 36,
-                height: 36
-              }}
-            />
-
-            <h2 style={{
-              margin: 0,
-              color: token.colorText,
+            justifyContent: 'center'
+          }}
+        />
+      ) : (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0, overflow: 'hidden' }}>
+            <div style={{
+              width: 32,
+              height: 32,
+              background: `linear-gradient(140deg, ${token.colorPrimary} 0%, ${alphaColor(token.colorPrimary, 0.72)} 100%)`,
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: token.colorWhite,
               fontSize: 15,
-              fontWeight: 600,
-              flex: 1,
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              boxShadow: `0 8px 16px -10px ${alphaColor(token.colorPrimary, 0.9)}`,
             }}>
-              {currentViewTitle}
-            </h2>
-
-            <Badge dot={hasUnreadAnnouncements} offset={[-4, 4]}>
-              <Button
-                type="text"
-                icon={<BellOutlined />}
-                onClick={() => setAnnouncementVisible(true)}
+              <BookOutlined />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span
+                className="app-display"
                 style={{
-                  fontSize: 17,
-                  color: token.colorTextSecondary,
-                  width: 36,
-                  height: 36
+                  color: token.colorText,
+                  fontWeight: 600,
+                  fontSize: 15,
+                  lineHeight: 1.25,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}
-              />
-            </Badge>
-          </>
-        ) : (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, zIndex: 1 }}>
+              >
+                {branding.app_name}
+              </span>
+              <span style={{ fontSize: 10, letterSpacing: '0.18em', color: token.colorTextTertiary, textTransform: 'uppercase' }}>
+                Writing Studio
+              </span>
+            </div>
+          </div>
+          <Button
+            type="text"
+            icon={<MenuFoldOutlined />}
+            onClick={() => setCollapsed(true)}
+            style={{
+              color: token.colorTextTertiary,
+              width: 30,
+              height: 30,
+              padding: 0,
+              flexShrink: 0
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+
+  const renderSiderFooter = (isCollapsed: boolean) => (
+    <div style={{
+      padding: isCollapsed ? '12px 8px' : 16,
+      borderTop: `1px solid ${token.colorBorderSecondary}`,
+    }}>
+      {isCollapsed ? (
+        <Space direction="vertical" style={{ width: '100%', alignItems: 'center' }} size={10}>
+          <Button
+            type="text"
+            icon={collapsedThemeIcon}
+            onClick={cycleThemeMode}
+            title={`主题模式：${mode === 'light' ? '浅色' : mode === 'dark' ? '深色' : '跟随系统'}（点击切换）`}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              background: alphaColor(token.colorBgContainer, 0.65),
+              border: `1px solid ${token.colorBorder}`,
+              color: token.colorTextSecondary,
+            }}
+          />
+          <UserMenu compact />
+        </Space>
+      ) : (
+        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: token.colorTextTertiary }}>
+            <span>主题模式</span>
+            <span>{resolvedMode === 'dark' ? '深色' : '浅色'}</span>
+          </div>
+          <ThemeSwitch block />
+          <UserMenu />
+        </Space>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {contextHolder}
+
+      <ProAppShell
+        title={branding.app_name}
+        logo={<img src="/logo.svg" alt={branding.app_name} style={{ width: 28, height: 28, display: 'block' }} />}
+        menuItems={shellMenuItems}
+        selectedKeys={[activeView]}
+        collapsed={collapsed}
+        onCollapseChange={setCollapsed}
+        onMenuClick={(key) => changeView(key as ProjectListView)}
+        brand={renderBrand}
+        siderFooter={renderSiderFooter}
+        headerHeight={headerHeight}
+        headerLeft={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+            {!isMobile && (
               <span style={{
                 width: 6,
                 height: 6,
@@ -694,140 +568,72 @@ export default function ProjectList() {
                 background: token.colorPrimary,
                 flexShrink: 0,
               }} />
-              <h2 style={{
-                margin: 0,
-                color: token.colorText,
-                fontSize: 17,
-                fontWeight: 600,
-                letterSpacing: '0.04em',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {currentViewTitle}
-              </h2>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20, zIndex: 1 }}>
-              {activeView === 'projects' && projects.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-                  {[
-                    { label: '创作中', value: activeProjects, unit: '本' },
-                    { label: '已完结', value: completedProjects, unit: '本' },
-                    { label: '总字数', value: totalWords, unit: '字' },
-                  ].map((item, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-end',
-                        gap: 2,
-                        paddingLeft: index === 0 ? 0 : 18,
-                        borderLeft: index === 0 ? 'none' : `1px solid ${token.colorBorderSecondary}`,
-                      }}
-                    >
-                      <span style={{ fontSize: 11, color: token.colorTextTertiary, letterSpacing: '0.08em' }}>
-                        {item.label}
-                      </span>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: token.colorText, fontVariantNumeric: 'tabular-nums' }}>
-                        {item.label === '总字数' ? formatWordCount(item.value) : item.value}
-                        {item.unit && <span style={{ fontSize: 11, marginLeft: 2, color: token.colorTextTertiary, fontWeight: 400 }}>{item.unit}</span>}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Badge dot={hasUnreadAnnouncements} offset={[-4, 4]}>
-                <Button
-                  icon={<BellOutlined />}
-                  onClick={() => setAnnouncementVisible(true)}
-                  style={{
-                    color: token.colorTextSecondary,
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: 'transparent',
-                    border: `1px solid ${token.colorBorderSecondary}`,
-                  }}
-                  title="系统公告"
-                />
-              </Badge>
-            </div>
+            )}
+            <h2 style={{
+              margin: 0,
+              color: token.colorText,
+              fontSize: isMobile ? 15 : 17,
+              fontWeight: 600,
+              letterSpacing: isMobile ? 'normal' : '0.04em',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              {currentViewTitle}
+            </h2>
+          </div>
+        }
+        headerRight={
+          <>
+            {!isMobile && activeView === 'projects' && projects.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                {[
+                  { label: '创作中', value: activeProjects, unit: '本' },
+                  { label: '已完结', value: completedProjects, unit: '本' },
+                  { label: '总字数', value: totalWords, unit: '字' },
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
+                      gap: 2,
+                      paddingLeft: index === 0 ? 0 : 18,
+                      borderLeft: index === 0 ? 'none' : `1px solid ${token.colorBorderSecondary}`,
+                    }}
+                  >
+                    <span style={{ fontSize: 11, color: token.colorTextTertiary, letterSpacing: '0.08em' }}>
+                      {item.label}
+                    </span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: token.colorText, fontVariantNumeric: 'tabular-nums' }}>
+                      {item.label === '总字数' ? formatWordCount(item.value) : item.value}
+                      {item.unit && <span style={{ fontSize: 11, marginLeft: 2, color: token.colorTextTertiary, fontWeight: 400 }}>{item.unit}</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Badge dot={hasUnreadAnnouncements} offset={[-4, 4]}>
+              <Button
+                icon={<BellOutlined />}
+                onClick={() => setAnnouncementVisible(true)}
+                style={{
+                  color: token.colorTextSecondary,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: 'transparent',
+                  border: `1px solid ${token.colorBorderSecondary}`,
+                }}
+                title="系统公告"
+              />
+            </Badge>
           </>
-        )}
-      </div>
-
-      {isMobile && (
-        <Drawer
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 30,
-                height: 30,
-                background: token.colorPrimary,
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: token.colorWhite,
-                fontSize: 16,
-              }}>
-                <BookOutlined />
-              </div>
-              <span style={{ fontWeight: 600, fontSize: 16, fontFamily: token.fontFamily }}>{branding.app_name}</span>
-            </div>
-          }
-          placement="left"
-          onClose={() => setDrawerVisible(false)}
-          open={drawerVisible}
-          width={280}
-          styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column' } }}
-        >
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <Menu
-              mode="inline"
-              selectedKeys={[activeView]}
-              style={{ borderRight: 0, paddingTop: 8 }}
-              onClick={({ key }) => {
-                changeView(key as ProjectListView);
-                setDrawerVisible(false);
-              }}
-              items={sideMenuItems}
-            />
-
-          </div>
-
-          <div style={{ padding: 16, borderTop: `1px solid ${token.colorBorderSecondary}` }}>
-            <Space direction="vertical" style={{ width: '100%' }} size={12}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: token.colorTextTertiary }}>
-                <span>主题模式</span>
-                <span>{resolvedMode === 'dark' ? '深色' : '浅色'}</span>
-              </div>
-              <ThemeSwitch block />
-              <UserMenu showFullInfo />
-            </Space>
-          </div>
-        </Drawer>
-      )}
-
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
-        marginLeft: isMobile ? 0 : desktopSiderWidth,
-        marginTop: headerHeight,
-        transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-      }}>
-
-        {/* 内容显示区 */}
+        }
+      >
         <div
-          ref={scrollContainerRef}
           style={{
-            flex: 1,
-            overflowY: 'auto',
             padding: activeView === 'projects'
               ? (isMobile ? '20px 16px 70px' : '24px 24px 70px')
               : 0,
@@ -839,9 +645,9 @@ export default function ProjectList() {
           {activeView === 'settings' && <SettingsPage />}
           {activeView === 'system-settings' && <SystemSettingsPage />}
           {activeView === 'prompts' && <PromptTemplates />}
-          
+
           {activeView === 'book-import' && <BookImport />}
-          
+
           {activeView === 'projects' && (
             <BookshelfPage
               isMobile={isMobile}
@@ -867,10 +673,10 @@ export default function ProjectList() {
               formatDate={formatDate}
             />
           )}
-        
-        <ChangelogFloatingButton />
+
+          <ChangelogFloatingButton />
         </div>
-      </div>
+      </ProAppShell>
 
       <AnnouncementTimelineModal
         visible={announcementVisible}
@@ -1047,7 +853,6 @@ export default function ProjectList() {
             </div>
          </Space>
       </Modal>
-
-    </div>
+    </>
   );
 }

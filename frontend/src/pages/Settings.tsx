@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Select, Slider, InputNumber, message, Space, Typography, Spin, Modal, Alert, Grid, Tabs, List, Tag, Popconfirm, Empty, Row, Col, Switch, theme } from 'antd';
-import { SaveOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, PlusOutlined, EditOutlined, CopyOutlined, WarningOutlined, PictureOutlined } from '@ant-design/icons';
-import { settingsApi, mcpPluginApi } from '../services/api';
+import { SaveOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, PlusOutlined, EditOutlined, CopyOutlined, PictureOutlined } from '@ant-design/icons';
+import { settingsApi } from '../services/api';
 import type { SettingsUpdate, APIKeyPreset, PresetCreateRequest, APIKeyPresetConfig } from '../types';
-import { eventBus, EventNames } from '../store/eventBus';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -137,22 +136,6 @@ export default function SettingsPage() {
         ...values,
         api_key: builtInKeyProviders.includes(values.api_provider || '') ? '' : values.api_key,
       };
-      // 检查是否与 MCP 缓存的配置不一致
-      const verifiedConfigStr = localStorage.getItem('mcp_verified_config');
-      let configChanged = false;
-      
-      if (verifiedConfigStr) {
-        try {
-          const verifiedConfig = JSON.parse(verifiedConfigStr);
-          configChanged =
-            verifiedConfig.provider !== normalizedValues.api_provider ||
-            verifiedConfig.baseUrl !== normalizedValues.api_base_url ||
-            verifiedConfig.model !== normalizedValues.llm_model;
-        } catch (e) {
-          console.error('Failed to parse verified config:', e);
-        }
-      }
-      
       await settingsApi.saveSettings(normalizedValues);
       message.success('设置已保存');
       setHasSettings(true);
@@ -174,66 +157,6 @@ export default function SettingsPage() {
         if (!stillActive) {
           setActivePresetId(undefined);
           message.info('配置已更改，预设激活状态已取消');
-        }
-      }
-      
-      // 如果配置发生变化，需要处理 MCP 插件
-      if (configChanged) {
-        // 清除 MCP 验证缓存
-        localStorage.removeItem('mcp_verified_config');
-        
-        // 检查并禁用所有 MCP 插件
-        try {
-          const plugins = await mcpPluginApi.getPlugins();
-          const activePlugins = plugins.filter(p => p.enabled);
-          
-          if (activePlugins.length > 0) {
-            // 禁用所有插件
-            message.loading({ content: '正在禁用 MCP 插件...', key: 'disable_mcp' });
-            await Promise.all(activePlugins.map(p => mcpPluginApi.togglePlugin(p.id, false)));
-            message.success({ content: '已禁用所有 MCP 插件', key: 'disable_mcp' });
-            
-            // 显示提示弹窗
-            modal.warning({
-              title: (
-                <Space>
-                  <WarningOutlined style={{ color: token.colorWarning }} />
-                  <span>API 配置已更改</span>
-                </Space>
-              ),
-              centered: true,
-              content: (
-                <div style={{ padding: '8px 0' }}>
-                  <Alert
-                    message="检测到您修改了 API 配置（提供商、地址或模型），为确保 MCP 插件正常工作，系统已自动禁用所有插件。"
-                    type="warning"
-                    showIcon
-                    style={{ marginBottom: 16 }}
-                  />
-                  <div style={{
-                    padding: 12,
-                    background: token.colorInfoBg,
-                    border: `1px solid ${token.colorInfoBorder}`,
-                    borderRadius: 8
-                  }}>
-                    <Text strong style={{ display: 'block', marginBottom: 8 }}>请完成以下步骤：</Text>
-                    <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13 }}>
-                      <li>前往 MCP 插件管理页面</li>
-                      <li>重新进行"模型能力检查"</li>
-                      <li>确认新模型支持 Function Calling 后再启用插件</li>
-                    </ol>
-                  </div>
-                </div>
-              ),
-              okText: '前往 MCP 页面',
-              cancelText: '稍后处理',
-              onOk: () => {
-                eventBus.emit(EventNames.SWITCH_TO_MCP_VIEW);
-              },
-            });
-          }
-        } catch (err) {
-          console.error('Failed to disable MCP plugins:', err);
         }
       }
     } catch {
@@ -290,32 +213,20 @@ export default function SettingsPage() {
     });
   };
 
-  const mumuTextDefaultUrl = 'https://ai.mumuverse.space/v1';
-  const mumuRegisterUrl = 'https://ai.mumuverse.space/register?aff=Ob92';
   const xiaomiMimoDefaultUrl = 'https://token-plan-cn.xiaomimimo.com/v1';
   const builtInKeyProviders = ['xiaomi_mimo'];
   const xiaomiMimoDefaultModels = [
     { value: 'mimo-v2.5', label: 'mimo-v2.5', description: 'Xiaomi MiMo 官方内置推荐模型' },
   ];
-  const mumuCoverBaseUrlOptions = [
-    { value: 'https://ai.mumuverse.space/v1beta', label: 'https://ai.mumuverse.space/v1beta', defaultModel: 'gemini-3.1-flash-image-preview' },
-    { value: 'https://ai.mumuverse.space/v1', label: 'https://ai.mumuverse.space/v1', defaultModel: 'gpt-image-2' },
-  ];
   const defaultCoverSettings = {
     cover_enabled: false,
-    cover_api_provider: 'mumu',
+    cover_api_provider: 'gemini',
     cover_api_key: '',
-    cover_api_base_url: mumuCoverBaseUrlOptions[0].value,
-    cover_image_model: mumuCoverBaseUrlOptions[0].defaultModel,
+    cover_api_base_url: 'https://generativelanguage.googleapis.com/v1beta',
+    cover_image_model: '',
   };
 
   const apiProviders = [
-    {
-      value: 'mumu',
-      label: 'MuMuのAPI',
-      defaultUrl: mumuTextDefaultUrl,
-      defaultModel: 'gemini-3-flash-preview'
-    },
     {
       value: 'xiaomi_mimo',
       label: 'Xiaomi MiMo（内置）',
@@ -339,10 +250,6 @@ export default function SettingsPage() {
       if (provider.defaultUrl) {
         nextValues.api_base_url = provider.defaultUrl;
       }
-      if (provider.value === 'mumu') {
-        nextValues.api_key = '';
-        nextValues.llm_model = provider.defaultModel || 'gemini-3-flash-preview';
-      }
       if (builtInKeyProviders.includes(provider.value)) {
         nextValues.api_key = '';
         nextValues.llm_model = provider.defaultModel || xiaomiMimoDefaultModels[0].value;
@@ -355,12 +262,6 @@ export default function SettingsPage() {
   };
 
   const coverApiProviders = [
-    {
-      value: 'mumu',
-      label: 'MuMuのAPI',
-      defaultUrl: mumuCoverBaseUrlOptions[0].value,
-      defaultModel: mumuCoverBaseUrlOptions[0].defaultModel,
-    },
     { value: 'gemini', label: 'Google Gemini', defaultUrl: 'https://generativelanguage.googleapis.com/v1beta' },
     { value: 'grok', label: 'Grok', defaultUrl: 'https://api.x.ai/v1' },
   ];
@@ -376,21 +277,8 @@ export default function SettingsPage() {
     if (provider.defaultUrl) {
       nextValues.cover_api_base_url = provider.defaultUrl;
     }
-    if (provider.value === 'mumu') {
-      nextValues.cover_api_key = '';
-      nextValues.cover_image_model = provider.defaultModel || mumuCoverBaseUrlOptions[0].defaultModel;
-    }
 
     form.setFieldsValue(nextValues);
-    setCoverTestResult(null);
-  };
-
-  const handleMumuCoverBaseUrlChange = (value: string) => {
-    const option = mumuCoverBaseUrlOptions.find(item => item.value === value);
-    form.setFieldsValue({
-      cover_api_base_url: value,
-      cover_image_model: option?.defaultModel || mumuCoverBaseUrlOptions[0].defaultModel,
-    });
     setCoverTestResult(null);
   };
 
@@ -639,10 +527,6 @@ export default function SettingsPage() {
       if (provider.defaultUrl) {
         nextValues.api_base_url = provider.defaultUrl;
       }
-      if (provider.value === 'mumu') {
-        nextValues.api_key = '';
-        nextValues.llm_model = provider.defaultModel || 'gemini-3-flash-preview';
-      }
       if (builtInKeyProviders.includes(provider.value)) {
         nextValues.api_key = '';
         nextValues.llm_model = provider.defaultModel || xiaomiMimoDefaultModels[0].value;
@@ -723,9 +607,6 @@ export default function SettingsPage() {
 
   const handlePresetActivate = async (presetId: string, presetName: string) => {
     try {
-      // 获取预设配置用于比较
-      const preset = presets.find(p => p.id === presetId);
-      
       await settingsApi.activatePreset(presetId);
       message.success(`已激活预设: ${presetName}`);
       
@@ -739,87 +620,6 @@ export default function SettingsPage() {
       
       loadPresets();
       loadSettings(); // 重新加载当前配置
-      
-      // 检查是否与 MCP 缓存的配置不一致
-      if (preset) {
-        const verifiedConfigStr = localStorage.getItem('mcp_verified_config');
-        let configChanged = false;
-        
-        if (verifiedConfigStr) {
-          try {
-            const verifiedConfig = JSON.parse(verifiedConfigStr);
-            configChanged =
-              verifiedConfig.provider !== preset.config.api_provider ||
-              verifiedConfig.baseUrl !== preset.config.api_base_url ||
-              verifiedConfig.model !== preset.config.llm_model;
-          } catch (e) {
-            console.error('Failed to parse verified config:', e);
-            configChanged = true; // 解析失败也视为配置变化
-          }
-        } else {
-          // 没有缓存的配置，如果有启用的插件也需要处理
-          configChanged = true;
-        }
-        
-        if (configChanged) {
-          // 清除 MCP 验证缓存
-          localStorage.removeItem('mcp_verified_config');
-          
-          // 检查并禁用所有 MCP 插件
-          try {
-            const plugins = await mcpPluginApi.getPlugins();
-            const activePlugins = plugins.filter(p => p.enabled);
-            
-            if (activePlugins.length > 0) {
-              // 禁用所有插件
-              message.loading({ content: '正在禁用 MCP 插件...', key: 'disable_mcp' });
-              await Promise.all(activePlugins.map(p => mcpPluginApi.togglePlugin(p.id, false)));
-              message.success({ content: '已禁用所有 MCP 插件', key: 'disable_mcp' });
-              
-              // 显示提示弹窗
-              modal.warning({
-                title: (
-                  <Space>
-                    <WarningOutlined style={{ color: token.colorWarning }} />
-                    <span>API 配置已更改</span>
-                  </Space>
-                ),
-                centered: true,
-                content: (
-                  <div style={{ padding: '8px 0' }}>
-                    <Alert
-                      message={`切换到预设「${presetName}」后，API 配置发生了变化。为确保 MCP 插件正常工作，系统已自动禁用所有插件。`}
-                      type="warning"
-                      showIcon
-                      style={{ marginBottom: 16 }}
-                    />
-                    <div style={{
-                      padding: 12,
-                      background: token.colorInfoBg,
-                      border: `1px solid ${token.colorInfoBorder}`,
-                      borderRadius: 8
-                    }}>
-                      <Text strong style={{ display: 'block', marginBottom: 8 }}>请完成以下步骤：</Text>
-                      <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13 }}>
-                        <li>前往 MCP 插件管理页面</li>
-                        <li>重新进行"模型能力检查"</li>
-                        <li>确认新模型支持 Function Calling 后再启用插件</li>
-                      </ol>
-                    </div>
-                  </div>
-                ),
-                okText: '前往 MCP 页面',
-                cancelText: '稍后处理',
-                onOk: () => {
-                  eventBus.emit(EventNames.SWITCH_TO_MCP_VIEW);
-                },
-              });
-            }
-          } catch (err) {
-            console.error('Failed to disable MCP plugins:', err);
-          }
-        }
-      }
     } catch (error) {
       message.error('激活失败');
       console.error(error);
@@ -956,8 +756,6 @@ export default function SettingsPage() {
       //   return 'purple';
       case 'gemini':
         return 'green';
-      case 'mumu':
-        return 'magenta';
       default:
         return 'default';
     }
@@ -1260,30 +1058,6 @@ export default function SettingsPage() {
                               ))}
                             </Select>
                           </Form.Item>
-
-                          {selectedProvider === 'mumu' && (
-                            <Alert
-                              type="info"
-                              showIcon
-                              message="MuMuのAPI 专属供应商"
-                              description={
-                                <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                                  <Text>
-                                    已自动填入专属地址，API Key 保持留空。免费注册后即可获取可用 Key。
-                                  </Text>
-                                  <div>
-                                    <Button
-                                      type="primary"
-                                      onClick={() => window.open(mumuRegisterUrl, '_blank', 'noopener,noreferrer')}
-                                    >
-                                      打开 MuMuのAPI 站点免费注册
-                                    </Button>
-                                  </div>
-                                </Space>
-                              }
-                              style={{ marginBottom: 16 }}
-                            />
-                          )}
 
                           {selectedProvider === 'xiaomi_mimo' && (
                             <Alert
@@ -1805,57 +1579,18 @@ export default function SettingsPage() {
                           </Select>
                         </Form.Item>
 
-                        {selectedCoverProvider === 'mumu' && (
-                          <Alert
-                            type="info"
-                            showIcon
-                            message="MuMuのAPI 专属适配器"
-                            description={
-                              <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                                <Text>
-                                  已固定提供 MuMuのAPI 图片接口地址选项，切换地址时会自动带出推荐模型。API Key 需前往 MuMuのAPI 站点注册获取。
-                                </Text>
-                                <div>
-                                  <Button
-                                    type="primary"
-                                    onClick={() => window.open(mumuRegisterUrl, '_blank', 'noopener,noreferrer')}
-                                  >
-                                    打开 MuMuのAPI 站点免费注册
-                                  </Button>
-                                </div>
-                              </Space>
-                            }
-                            style={{ marginBottom: 16 }}
-                          />
-                        )}
-
                         <Form.Item label="封面图片 API Key" name="cover_api_key" rules={[{ required: true, message: '请输入封面图片 API Key' }]}>
-                          <Input.Password size={isMobile ? 'middle' : 'large'} placeholder={selectedCoverProvider === 'mumu' ? '请输入 MuMuのAPI Key' : '输入封面图片 API Key'} autoComplete="new-password" />
+                          <Input.Password size={isMobile ? 'middle' : 'large'} placeholder="输入封面图片 API Key" autoComplete="new-password" />
                         </Form.Item>
 
                         <Form.Item label="封面图片 API 地址" name="cover_api_base_url" rules={[{ type: 'url', message: '请输入有效的URL' }]}>
-                          {selectedCoverProvider === 'mumu' ? (
-                            <Select
-                              size={isMobile ? 'middle' : 'large'}
-                              onChange={handleMumuCoverBaseUrlChange}
-                              options={mumuCoverBaseUrlOptions.map(option => ({
-                                value: option.value,
-                                label: option.label,
-                              }))}
-                            />
-                          ) : (
-                            <Input size={isMobile ? 'middle' : 'large'} placeholder={selectedCoverProvider === 'grok' ? 'https://api.x.ai/v1' : 'https://generativelanguage.googleapis.com/v1beta'} />
-                          )}
+                          <Input size={isMobile ? 'middle' : 'large'} placeholder={selectedCoverProvider === 'grok' ? 'https://api.x.ai/v1' : 'https://generativelanguage.googleapis.com/v1beta'} />
                         </Form.Item>
 
                         <Form.Item label="封面图片模型" name="cover_image_model" rules={[{ required: true, message: '请输入封面图片模型名称' }]}>
                           <Input
                             size={isMobile ? 'middle' : 'large'}
-                            placeholder={selectedCoverProvider === 'mumu'
-                              ? '选择地址后自动填入推荐模型'
-                              : selectedCoverProvider === 'grok'
-                                ? 'grok-2-image'
-                                : 'gemini-2.0-flash-exp-image-generation'}
+                            placeholder={selectedCoverProvider === 'grok' ? 'grok-2-image' : 'gemini-2.0-flash-exp-image-generation'}
                           />
                         </Form.Item>
 
@@ -1943,36 +1678,11 @@ export default function SettingsPage() {
                   style={{ marginBottom: 16 }}
                 >
                   <Select placeholder="选择提供商" onChange={handlePresetProviderChange}>
-                    <Select.Option value="mumu">MuMuのAPI</Select.Option>
                     <Select.Option value="xiaomi_mimo">Xiaomi MiMo（内置）</Select.Option>
                     <Select.Option value="openai">OpenAI</Select.Option>
                     <Select.Option value="gemini">Google Gemini</Select.Option>
                   </Select>
                 </Form.Item>
-
-                {selectedPresetProvider === 'mumu' && (
-                  <Alert
-                    type="info"
-                    showIcon
-                    message="MuMuのAPI 专属供应商"
-                    description={
-                      <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                        <Text>
-                          已自动填入专属地址，API Key 保持留空。免费注册后即可获取可用 Key。
-                        </Text>
-                        <div>
-                          <Button
-                            type="primary"
-                            onClick={() => window.open(mumuRegisterUrl, '_blank', 'noopener,noreferrer')}
-                          >
-                            打开 MuMuのAPI 站点免费注册
-                          </Button>
-                        </div>
-                      </Space>
-                    }
-                    style={{ marginBottom: 16 }}
-                  />
-                )}
 
                 {selectedPresetProvider === 'xiaomi_mimo' && (
                   <Alert

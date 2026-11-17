@@ -1,11 +1,10 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Button, Modal, message, Spin, Space, Tag, Typography, Upload, Checkbox, Tooltip, Drawer, Menu, theme, Badge } from 'antd';
-import { EditOutlined, BookOutlined, CalendarOutlined, FileTextOutlined, TrophyOutlined, SettingOutlined, UploadOutlined, ApiOutlined, FileSearchOutlined, MenuUnfoldOutlined, MenuFoldOutlined, BulbOutlined, MoonOutlined, DesktopOutlined, MailOutlined, BellOutlined } from '@ant-design/icons';
+import { EditOutlined, BookOutlined, CalendarOutlined, FileTextOutlined, TrophyOutlined, SettingOutlined, UploadOutlined, FileSearchOutlined, MenuUnfoldOutlined, MenuFoldOutlined, BulbOutlined, MoonOutlined, DesktopOutlined, MailOutlined, BellOutlined } from '@ant-design/icons';
 import { authApi, projectApi } from '../services/api';
 import { useStore } from '../store';
 import { useProjectSync } from '../store/hooks';
-import { eventBus, EventNames } from '../store/eventBus';
 import type { ReactNode } from 'react';
 import type { Project, User } from '../types';
 import UserMenu from '../components/UserMenu';
@@ -14,7 +13,6 @@ import ThemeSwitch from '../components/ThemeSwitch';
 import { useThemeMode } from '../theme/useThemeMode';
 import SettingsPage from './Settings';
 import SystemSettingsPage from './SystemSettings';
-import MCPPluginsPage from './MCPPlugins';
 import PromptTemplates from './PromptTemplates';
 import BookImport from './BookImport';
 import BookshelfPage from './BookshelfPage';
@@ -44,11 +42,11 @@ const formatWordCount = (count: number): string => {
   }
 };
 
-type ProjectListView = 'projects' | 'settings' | 'system-settings' | 'mcp' | 'prompts' | 'book-import';
+type ProjectListView = 'projects' | 'settings' | 'system-settings' | 'prompts' | 'book-import';
 
 const parseViewFromSearch = (search: string): ProjectListView => {
   const view = new URLSearchParams(search).get('view');
-  if (view === 'settings' || view === 'system-settings' || view === 'mcp' || view === 'prompts' || view === 'book-import' || view === 'projects') {
+  if (view === 'settings' || view === 'system-settings' || view === 'prompts' || view === 'book-import' || view === 'projects') {
     return view;
   }
   return 'projects';
@@ -113,23 +111,12 @@ export default function ProjectList() {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // 处理切换到 MCP 视图的事件
-  const handleSwitchToMcp = useCallback(() => {
-    changeView('mcp');
-  }, [changeView]);
-
   useEffect(() => {
     refreshProjects();
     authApi.getCurrentUser().then(setCurrentUser).catch(() => setCurrentUser(null));
-    
-    // 监听切换到 MCP 视图的事件
-    eventBus.on(EventNames.SWITCH_TO_MCP_VIEW, handleSwitchToMcp);
-    
-    return () => {
-      eventBus.off(EventNames.SWITCH_TO_MCP_VIEW, handleSwitchToMcp);
-    };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleSwitchToMcp]);
+  }, []);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -402,11 +389,9 @@ export default function ProjectList() {
       ? '提示词模板'
       : activeView === 'book-import'
         ? '拆书导入'
-        : activeView === 'mcp'
-          ? 'MCP 插件'
-          : activeView === 'system-settings'
-            ? '系统设置'
-            : 'API 设置';
+        : activeView === 'system-settings'
+          ? '系统设置'
+          : 'API 设置';
 
   const isAdmin = !!currentUser?.is_admin;
 
@@ -424,11 +409,6 @@ export default function ProjectList() {
           key: 'book-import',
           icon: <UploadOutlined />,
           label: '拆书导入',
-        },
-        {
-          key: 'mcp',
-          icon: <ApiOutlined />,
-          label: 'MCP 插件',
         },
         {
           key: 'prompts',
@@ -451,11 +431,6 @@ export default function ProjectList() {
           icon: <MailOutlined />,
           label: '系统设置',
         }] : []),
-        {
-          key: 'mumu-api',
-          icon: <ApiOutlined />,
-          label: 'MuMuのAPI',
-        },
       ],
     },
   ];
@@ -472,11 +447,6 @@ export default function ProjectList() {
       label: '拆书导入',
     },
     {
-      key: 'mcp',
-      icon: <ApiOutlined />,
-      label: 'MCP 插件',
-    },
-    {
       key: 'prompts',
       icon: <FileSearchOutlined />,
       label: '提示词管理',
@@ -491,11 +461,6 @@ export default function ProjectList() {
       icon: <MailOutlined />,
       label: '系统设置',
     }] : []),
-    {
-      key: 'mumu-api',
-      icon: <ApiOutlined />,
-      label: 'MuMuのAPI',
-    },
   ];
 
   return (
@@ -578,251 +543,12 @@ export default function ProjectList() {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}>
-                    MuMuAINovel
+                    AI 小说创作台
                   </span>
                 </div>
-                <Button
-                  type="text"
-                  icon={<MenuFoldOutlined />}
-                  onClick={() => setCollapsed(true)}
-                  style={{
-                    color: token.colorWhite,
-                    width: 32,
-                    height: 32,
-                    padding: 0,
-                    flexShrink: 0
-                  }}
-                />
-              </>
-            )}
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-            <Menu
-              mode="inline"
-              inlineCollapsed={collapsed}
-              selectedKeys={[activeView]}
-              style={{ borderRight: 0, paddingTop: 12, width: '100%' }}
-              onClick={({ key }) => {
-                if (key === 'mumu-api') {
-                  window.open('https://ai.mumuverse.space/register?aff=Ob92', '_blank', 'noopener,noreferrer');
-                  return;
-                }
-                changeView(key as ProjectListView);
-              }}
-              items={collapsed ? sideMenuItemsCollapsed : sideMenuItems}
-            />
-          </div>
-
-          <div style={{
-            padding: collapsed ? '12px 8px' : 16,
-            borderTop: `1px solid ${token.colorBorderSecondary}`,
-            flexShrink: 0
-          }}>
-            {collapsed ? (
-              <Space direction="vertical" style={{ width: '100%', alignItems: 'center' }} size={10}>
-                <Button
-                  type="text"
-                  icon={collapsedThemeIcon}
-                  onClick={cycleThemeMode}
-                  title={`主题模式：${mode === 'light' ? '浅色' : mode === 'dark' ? '深色' : '跟随系统'}（点击切换）`}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    background: alphaColor(token.colorBgContainer, 0.65),
-                    border: `1px solid ${token.colorBorder}`,
-                    color: token.colorTextSecondary,
-                  }}
-                />
-                <UserMenu compact />
-              </Space>
-            ) : (
-              <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: token.colorTextTertiary }}>
-                  <span>主题模式</span>
-                  <span>{resolvedMode === 'dark' ? '深色' : '浅色'}</span>
-                </div>
-                <ThemeSwitch block />
-                <UserMenu />
-              </Space>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div style={{
-        background: token.colorPrimary,
-        padding: isMobile ? '0 12px' : '0 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'fixed',
-        top: 0,
-        left: isMobile ? 0 : desktopSiderWidth,
-        right: 0,
-        zIndex: 1000,
-        boxShadow: `0 2px 10px ${alphaColor(token.colorText, 0.16)}`,
-        height: headerHeight,
-        flexShrink: 0,
-        transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        overflow: 'hidden'
-      }}>
-        {isMobile ? (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Button
-                type="text"
-                icon={<MenuUnfoldOutlined />}
-                onClick={() => setDrawerVisible(true)}
-                style={{
-                  fontSize: 18,
-                  color: token.colorWhite,
-                  width: 36,
-                  height: 36
-                }}
-              />
-            </div>
-
-            <h2 style={{
-              margin: 0,
-              color: token.colorWhite,
-              fontSize: 16,
-              fontWeight: 600,
-              textShadow: `0 2px 4px ${alphaColor(token.colorText, 0.2)}`,
-              flex: 1,
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              paddingRight: 36
-            }}>
-              {currentViewTitle}
-            </h2>
-
-            <Badge dot={hasUnreadAnnouncements} offset={[-4, 4]}>
-              <Button
-                type="text"
-                icon={<BellOutlined />}
-                onClick={() => setAnnouncementVisible(true)}
-                style={{
-                  fontSize: 18,
-                  color: token.colorWhite,
-                  width: 36,
-                  height: 36
-                }}
-              />
-            </Badge>
-          </>
-        ) : (
-          <>
-            <div style={{ width: 40, zIndex: 1 }} />
-
-            <h2 style={{
-              margin: 0,
-              color: token.colorWhite,
-              fontSize: '24px',
-              fontWeight: 600,
-              textShadow: `0 2px 4px ${alphaColor(token.colorText, 0.2)}`,
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '45%'
-            }}>
-              {currentViewTitle}
-            </h2>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, zIndex: 1 }}>
-              <Badge dot={hasUnreadAnnouncements} offset={[-4, 4]}>
-                <Button
-                  type="text"
-                  icon={<BellOutlined />}
-                  onClick={() => setAnnouncementVisible(true)}
-                  style={{
-                    color: token.colorWhite,
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    background: alphaColor(token.colorWhite, 0.12),
-                    border: `1px solid ${alphaColor(token.colorWhite, 0.18)}`,
-                  }}
-                  title="系统公告"
-                />
-              </Badge>
-              {activeView === 'projects' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                  {projects.length > 0 && (
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      {[
-                        { label: '创作中', value: activeProjects, unit: '本' },
-                        { label: '已完结', value: completedProjects, unit: '本' },
-                        { label: '总字数', value: totalWords, unit: '字' },
-                      ].map((item, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backdropFilter: 'blur(4px)',
-                            borderRadius: '28px',
-                            minWidth: '56px',
-                            height: '56px',
-                            padding: '0 12px',
-                            boxShadow: `inset 0 0 15px ${alphaColor(token.colorWhite, 0.15)}, 0 4px 10px ${alphaColor(token.colorText, 0.1)}`,
-                            cursor: 'default',
-                            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                            e.currentTarget.style.boxShadow = `inset 0 0 20px ${alphaColor(token.colorWhite, 0.25)}, 0 8px 16px ${alphaColor(token.colorText, 0.15)}`;
-                            e.currentTarget.style.border = `1px solid ${alphaColor(token.colorWhite, 0.1)}`;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                            e.currentTarget.style.boxShadow = `inset 0 0 15px ${alphaColor(token.colorWhite, 0.15)}, 0 4px 10px ${alphaColor(token.colorText, 0.1)}`;
-                          }}
-                        >
-                          <span style={{ fontSize: '11px', color: alphaColor(token.colorWhite, 0.9), marginBottom: '2px', lineHeight: 1 }}>
-                            {item.label}
-                          </span>
-                          <span style={{ fontSize: '15px', fontWeight: '600', color: token.colorWhite, lineHeight: 1, fontFamily: 'Monaco, monospace' }}>
-                            {item.label === '总字数' ? formatWordCount(item.value) : item.value}
-                            {item.unit && <span style={{ fontSize: '10px', marginLeft: '2px', opacity: 0.8 }}>{item.unit}</span>}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {isMobile && (
-        <Drawer
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 30,
-                height: 30,
-                background: token.colorPrimary,
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: token.colorWhite,
-                fontSize: 16,
-              }}>
                 <BookOutlined />
               </div>
-              <span style={{ fontWeight: 600, fontSize: 16, fontFamily: token.fontFamily }}>MuMuAINovel</span>
+              <span style={{ fontWeight: 600, fontSize: 16, fontFamily: token.fontFamily }}>AI 小说创作台</span>
             </div>
           }
           placement="left"
@@ -837,11 +563,6 @@ export default function ProjectList() {
               selectedKeys={[activeView]}
               style={{ borderRight: 0, paddingTop: 8 }}
               onClick={({ key }) => {
-                if (key === 'mumu-api') {
-                  window.open('https://ai.mumuverse.space/register?aff=Ob92', '_blank', 'noopener,noreferrer');
-                  setDrawerVisible(false);
-                  return;
-                }
                 changeView(key as ProjectListView);
                 setDrawerVisible(false);
               }}
@@ -890,7 +611,6 @@ export default function ProjectList() {
         >
           {activeView === 'settings' && <SettingsPage />}
           {activeView === 'system-settings' && <SystemSettingsPage />}
-          {activeView === 'mcp' && <MCPPluginsPage />}
           {activeView === 'prompts' && <PromptTemplates />}
           
           {activeView === 'book-import' && <BookImport />}

@@ -3,7 +3,6 @@
 
 # 构建参数
 ARG USE_CN_MIRROR=false
-ARG EMBEDDING_MODEL_REVISION=60750e200f336606cdd1ecbda9bb33fbf4d5b2a1
 
 # 阶段1: 构建前端
 FROM node:22-alpine AS frontend-builder
@@ -41,7 +40,6 @@ FROM python:3.12-slim
 ARG USE_CN_MIRROR
 ARG TARGETPLATFORM
 ARG TARGETARCH
-ARG EMBEDDING_MODEL_REVISION
 
 # 设置工作目录
 WORKDIR /app
@@ -70,20 +68,9 @@ RUN if [ "$USE_CN_MIRROR" = "true" ]; then \
         pip install --no-cache-dir -r requirements.txt; \
     fi
 
-# 直接从 ModelScope 下载已转换的 ONNX 部署文件，并校验发布清单。
-ENV ONNX_EMBEDDING_MODEL_DIR=/app/embedding/onnx/paraphrase-multilingual-MiniLM-L12-v2
-RUN set -eu; \
-    model_url="https://modelscope.cn/models/mumujie/paraphrase-multilingual-MiniLM-L12-v2-ONNX/resolve/${EMBEDDING_MODEL_REVISION}"; \
-    mkdir -p "$ONNX_EMBEDDING_MODEL_DIR"; \
-    curl --fail --location --retry 5 --retry-all-errors "$model_url/model.onnx" -o "$ONNX_EMBEDDING_MODEL_DIR/model.onnx"; \
-    curl --fail --location --retry 5 --retry-all-errors "$model_url/tokenizer.json" -o "$ONNX_EMBEDDING_MODEL_DIR/tokenizer.json"; \
-    curl --fail --location --retry 5 --retry-all-errors "$model_url/embedding_config.json" -o "$ONNX_EMBEDDING_MODEL_DIR/embedding_config.json"; \
-    echo "e7515ed8b2f63e84f99dfed652b572e61a9a799f694a1c9399a7f3845b69cda5  $ONNX_EMBEDDING_MODEL_DIR/model.onnx" | sha256sum -c -; \
-    echo "2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8  $ONNX_EMBEDDING_MODEL_DIR/tokenizer.json" | sha256sum -c -; \
-    echo "d9cfbb22ea59e66294db9bd5b35b452326658a2fe1580e409f0c806be01973c2  $ONNX_EMBEDDING_MODEL_DIR/embedding_config.json" | sha256sum -c -
-
-# 复制后端代码（不包含embedding，因为已经下载了）
+# 复制后端代码
 COPY backend/ ./
+
 
 # 从前端构建阶段复制构建好的静态文件
 COPY --from=frontend-builder /frontend/dist ./static

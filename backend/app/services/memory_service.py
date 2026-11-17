@@ -1,14 +1,68 @@
-"""向量记忆服务 - 基于ChromaDB实现长期记忆和语义检索"""
-import chromadb
+"""向量记忆服务 - 基于ChromaDB实现长期记忆和语义检索
+
+运行环境未安装 ChromaDB / ONNX Runtime 时自动降级为无向量模式：
+写入操作跳过、检索返回空结果，业务流程保持可用。
+"""
+import functools
 from typing import List, Dict, Any, Optional
 import json
 from datetime import datetime
 from app.logger import get_logger
-from app.services.onnx_embedding import OnnxEmbeddingModel
 import os
 import hashlib
 
+try:
+    import chromadb
+    from app.services.onnx_embedding import OnnxEmbeddingModel
+    VECTOR_BACKEND_AVAILABLE = True
+except Exception:
+    chromadb = None
+    OnnxEmbeddingModel = None
+    VECTOR_BACKEND_AVAILABLE = False
+
 logger = get_logger(__name__)
+
+_VECTOR_MEMORY_ENV = os.getenv("ENABLE_VECTOR_MEMORY", "auto").strip().lower()
+if _VECTOR_MEMORY_ENV in ("0", "false", "no", "off"):
+    VECTOR_MEMORY_ENABLED = False
+elif _VECTOR_MEMORY_ENV in ("1", "true", "yes", "on"):
+    VECTOR_MEMORY_ENABLED = True
+else:
+    VECTOR_MEMORY_ENABLED = VECTOR_BACKEND_AVAILABLE
+
+_VECTOR_DISABLED_RESULTS: Dict[str, Any] = {
+    "add_memory": False,
+    "batch_add_memories": 0,
+    "search_memories": [],
+    "get_recent_memories": [],
+    "find_unresolved_foreshadows": [],
+    "build_context_for_generation": "",
+    "delete_foreshadow_memories": 0,
+    "delete_chapter_memories": False,
+    "delete_project_memories": False,
+    "update_memory": False,
+    "get_memory_stats": {
+        "total_count": 0,
+        "by_type": {},
+        "by_chapter": {},
+        "foreshadow_count": 0,
+        "foreshadow_resolved": 0,
+    },
+}
+
+
+def requires_vector_backend(func):
+    """向量后端不可用时返回安全默认值，保证业务流程继续执行。"""
+    @functools.wraps(func)
+    async def wrapper(self, *args, **kwargs):
+        if not self.enabled:
+            result = _VECTOR_DISABLED_RESULTS.get(func.__name__)
+            if isinstance(result, (dict, list, set)):
+                return type(result)(result)
+            return result
+        return await func(self, *args, **kwargs)
+    return wrapper
+
 
 class MemoryService:
     """向量记忆管理服务 - 实现语义检索和长期记忆"""
@@ -26,7 +80,16 @@ class MemoryService:
         """初始化ChromaDB和Embedding模型"""
         if self._initialized:
             return
-            
+
+        self.client = None
+        self.embedding_model = None
+        self.enabled = False
+
+        if not VECTOR_MEMORY_ENABLED:
+            self._initialized = True
+            logger.info("向量记忆未启用，已切换为无向量模式")
+            return
+
         try:
             # 确保数据目录存在
             chroma_dir = "data/chroma_db"
@@ -39,6 +102,7 @@ class MemoryService:
             self.embedding_model = OnnxEmbeddingModel()
             logger.info(f"✅ ONNX Embedding 模型加载成功: {self.embedding_model.model_dir}")
             
+            self.enabled = True
             self._initialized = True
             logger.info("✅ MemoryService初始化成功")
             logger.info(f"  - ChromaDB目录: {chroma_dir}")
@@ -46,7 +110,8 @@ class MemoryService:
             
         except Exception as e:
             logger.error(f"❌ MemoryService初始化失败: {str(e)}")
-            raise
+            self._initialized = True
+            logger.info("向量记忆不可用，已切换为无向量模式")
     
     def get_collection(self, user_id: str, project_id: str):
         """
@@ -61,6 +126,8 @@ class MemoryService:
         Returns:
             ChromaDB Collection对象
         """
+        if not self.enabled:
+            raise RuntimeError("向量记忆未启用")
         # ChromaDB collection命名规则：
         # 1. 3-63字符（最重要！）
         # 2. 开头和结尾必须是字母或数字
@@ -87,6 +154,7 @@ class MemoryService:
             logger.error(f"❌ 获取collection失败: {str(e)}")
             raise
     
+    @requires_vector_backend
     async def add_memory(
         self,
         user_id: str,
@@ -150,6 +218,7 @@ class MemoryService:
             logger.error(f"❌ 添加记忆失败: {str(e)}")
             return False
     
+    @requires_vector_backend
     async def batch_add_memories(
         self,
         user_id: str,
@@ -216,6 +285,7 @@ class MemoryService:
             logger.error(f"❌ 批量添加记忆失败: {str(e)}")
             return 0
     
+    @requires_vector_backend
     async def search_memories(
         self,
         user_id: str,
@@ -293,6 +363,7 @@ class MemoryService:
             logger.error(f"❌ 搜索记忆失败: {str(e)}")
             return []
     
+    @requires_vector_backend
     async def get_recent_memories(
         self,
         user_id: str,
@@ -357,6 +428,7 @@ class MemoryService:
             logger.error(f"❌ 获取最近记忆失败: {str(e)}")
             return []
     
+    @requires_vector_backend
     async def find_unresolved_foreshadows(
         self,
         user_id: str,
@@ -410,6 +482,7 @@ class MemoryService:
             logger.error(f"❌ 查找伏笔失败: {str(e)}")
             return []
     
+    @requires_vector_backend
     async def build_context_for_generation(
         self,
         user_id: str,
@@ -544,6 +617,7 @@ class MemoryService:
         
         return "\n".join(lines) + "\n"
     
+    @requires_vector_backend
     async def delete_foreshadow_memories(
         self,
         user_id: str,
@@ -597,6 +671,7 @@ class MemoryService:
             logger.error(f"❌ 删除伏笔相关向量记忆失败: {str(e)}")
             return 0
 
+    @requires_vector_backend
     async def delete_chapter_memories(
         self,
         user_id: str,
@@ -635,6 +710,7 @@ class MemoryService:
             logger.error(f"❌ 删除章节记忆失败: {str(e)}")
             return False
     
+    @requires_vector_backend
     async def delete_project_memories(
         self,
         user_id: str,
@@ -673,6 +749,7 @@ class MemoryService:
             logger.error(f"❌ 删除项目记忆失败: {str(e)}")
             return False
     
+    @requires_vector_backend
     async def update_memory(
         self,
         user_id: str,
@@ -730,6 +807,7 @@ class MemoryService:
             logger.error(f"❌ 更新记忆失败: {str(e)}")
             return False
     
+    @requires_vector_backend
     async def get_memory_stats(
         self,
         user_id: str,

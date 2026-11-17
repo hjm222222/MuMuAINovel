@@ -14,14 +14,12 @@ import {
   BankOutlined,
   EditOutlined,
   FundOutlined,
-  HeartOutlined,
   TrophyOutlined,
   BulbOutlined,
   CloudOutlined,
   MoonOutlined,
   ThunderboltOutlined,
   SettingOutlined,
-  DatabaseOutlined,
 } from '@ant-design/icons';
 import { useStore } from '../store';
 import { useCharacterSync, useOutlineSync, useChapterSync } from '../store/hooks';
@@ -154,11 +152,6 @@ export default function ProjectDetail() {
 
   const menuItems = [
     {
-      key: 'sponsor',
-      icon: <HeartOutlined />,
-      label: <Link to={`/project/${projectId}/sponsor`}>赞助支持</Link>,
-    },
-    {
       type: 'group' as const,
       label: '创作管理',
       children: [
@@ -207,11 +200,6 @@ export default function ProjectDetail() {
           icon: <BulbOutlined />,
           label: <Link to={`/project/${projectId}/foreshadows`}>伏笔管理</Link>,
         },
-        {
-          key: 'knowledge-base',
-          icon: <DatabaseOutlined />,
-          label: <Link to={`/project/${projectId}/knowledge-base`}>知识库管理</Link>,
-        },
       ],
     },
     {
@@ -222,11 +210,6 @@ export default function ProjectDetail() {
           key: 'writing-styles',
           icon: <EditOutlined />,
           label: <Link to={`/project/${projectId}/writing-styles`}>写作风格</Link>,
-        },
-        {
-          key: 'prompt-workshop',
-          icon: <CloudOutlined />,
-          label: <Link to={`/project/${projectId}/prompt-workshop`}>提示词工坊</Link>,
         },
         {
           key: 'skill-chat',
@@ -243,11 +226,6 @@ export default function ProjectDetail() {
   ];
 
   const menuItemsCollapsed = [
-    {
-      key: 'sponsor',
-      icon: <HeartOutlined />,
-      label: <Link to={`/project/${projectId}/sponsor`}>赞助支持</Link>,
-    },
     {
       key: 'world-setting',
       icon: <GlobalOutlined />,
@@ -294,19 +272,9 @@ export default function ProjectDetail() {
       label: <Link to={`/project/${projectId}/foreshadows`}>伏笔管理</Link>,
     },
     {
-      key: 'knowledge-base',
-      icon: <DatabaseOutlined />,
-      label: <Link to={`/project/${projectId}/knowledge-base`}>知识库管理</Link>,
-    },
-    {
       key: 'writing-styles',
       icon: <EditOutlined />,
       label: <Link to={`/project/${projectId}/writing-styles`}>写作风格</Link>,
-    },
-    {
-      key: 'prompt-workshop',
-      icon: <CloudOutlined />,
-      label: <Link to={`/project/${projectId}/prompt-workshop`}>提示词工坊</Link>,
     },
     {
       key: 'skill-chat',
@@ -324,7 +292,6 @@ export default function ProjectDetail() {
   const selectedKey = useMemo(() => {
     const path = location.pathname;
     if (path.includes('/world-setting')) return 'world-setting';
-    if (path.includes('/knowledge-base')) return 'knowledge-base';
     if (path.includes('/careers')) return 'careers';
     if (path.includes('/relationships')) return 'relationships';
     if (path.includes('/organizations')) return 'organizations';
@@ -334,12 +301,10 @@ export default function ProjectDetail() {
     if (path.includes('/foreshadows')) return 'foreshadows';
     if (path.includes('/chapters')) return 'chapters';
     if (path.includes('/writing-styles')) return 'writing-styles';
-    if (path.includes('/prompt-workshop')) return 'prompt-workshop';
     if (path.includes('/skill-chat')) return 'skill-chat';
     if (path.includes('/skill-manage')) return 'skill-manage';
-    if (path.includes('/sponsor')) return 'sponsor';
     // if (path.includes('/polish')) return 'polish';
-    return 'sponsor'; // 默认选中赞助支持
+    return 'world-setting'; // 默认选中世界设定
   }, [location.pathname]);
 
   if (loading || !currentProject) {
@@ -527,7 +492,7 @@ export default function ProjectDetail() {
                 }}>
                   <BookOutlined />
                 </div>
-                <span style={{ fontWeight: 600, fontSize: 16 }}>MuMuAINovel</span>
+                <span style={{ fontWeight: 600, fontSize: 16 }}>AI 小说创作台</span>
               </div>
             }
             placement="left"
@@ -623,7 +588,7 @@ export default function ProjectDetail() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                       }}>
-                        MuMuAINovel
+                        AI 小说创作台
                       </span>
                     </div>
                     <Button

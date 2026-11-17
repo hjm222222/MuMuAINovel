@@ -280,7 +280,8 @@ class KnowledgeService:
                 document.extracted_char_count = len(text)
                 document.chunk_count = len(chunks)
                 # 重建索引前先清理旧向量，避免同一文档的旧版本继续参与检索。
-                await asyncio.to_thread(knowledge_vector_store.delete_document, user_id, document.id)
+                if knowledge_vector_store.available:
+                    await asyncio.to_thread(knowledge_vector_store.delete_document, user_id, document.id)
                 await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.document_id == document_id))
                 await db.commit()
                 db_chunks: list[KnowledgeChunk] = []
@@ -330,7 +331,8 @@ class KnowledgeService:
                     "section_title": chunk.section_title,
                     "heading_path": chunk.heading_path,
                 } for chunk in batch]
-                await asyncio.to_thread(knowledge_vector_store.upsert, user_id, vector_items)
+                if knowledge_vector_store.available:
+                    await asyncio.to_thread(knowledge_vector_store.upsert, user_id, vector_items)
                 async with session_factory() as db:
                     ids = [chunk.id for chunk in batch]
                     rows = (await db.execute(select(KnowledgeChunk).where(KnowledgeChunk.id.in_(ids)))).scalars().all()
@@ -365,7 +367,8 @@ class KnowledgeService:
             await tracker.error(str(exc)[:500])
 
     async def delete_document(self, document: KnowledgeDocument, db: AsyncSession) -> None:
-        await asyncio.to_thread(knowledge_vector_store.delete_document, document.user_id, document.id)
+        if knowledge_vector_store.available:
+            await asyncio.to_thread(knowledge_vector_store.delete_document, document.user_id, document.id)
         path = Path(document.storage_path)
         await db.delete(document)
         await db.commit()
@@ -380,6 +383,8 @@ class KnowledgeService:
     async def search(
         self, base: KnowledgeBase, request_query: str, top_k: int, document_ids: list[str], min_score: float
     ) -> list[dict[str, Any]]:
+        if not knowledge_vector_store.available:
+            return []
         hits = await asyncio.to_thread(
             knowledge_vector_store.search,
             base.user_id,

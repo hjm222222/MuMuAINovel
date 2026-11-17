@@ -10,14 +10,20 @@ from app.services.memory_service import memory_service
 
 class KnowledgeVectorStore:
     def __init__(self) -> None:
-        self.client = memory_service.client
-        self.embedding_model = memory_service.embedding_model
+        self.client = getattr(memory_service, "client", None)
+        self.embedding_model = getattr(memory_service, "embedding_model", None)
+
+    @property
+    def available(self) -> bool:
+        return self.client is not None and self.embedding_model is not None
 
     def _collection_name(self, user_id: str) -> str:
         user_hash = hashlib.sha256(user_id.encode()).hexdigest()[:12]
         return f"knowledge_u_{user_hash}"
 
     def collection(self, user_id: str):
+        if not self.available:
+            raise RuntimeError("向量知识库未启用")
         return self.client.get_or_create_collection(
             name=self._collection_name(user_id),
             configuration={"hnsw": {"space": "cosine"}},

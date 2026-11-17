@@ -1590,7 +1590,9 @@ export default function SettingsPage() {
                         <Form.Item label="封面图片模型" name="cover_image_model" rules={[{ required: true, message: '请输入封面图片模型名称' }]}>
                           <Input
                             size={isMobile ? 'middle' : 'large'}
-                            placeholder={selectedCoverProvider === 'grok' ? 'grok-2-image' : 'gemini-2.0-flash-exp-image-generation'}
+                            placeholder={selectedCoverProvider === 'grok'
+                              ? 'grok-2-image'
+                              : 'gemini-2.0-flash-exp-image-generation'}
                           />
                         </Form.Item>
 

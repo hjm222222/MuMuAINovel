@@ -546,6 +546,241 @@ export default function ProjectList() {
                     AI 小说创作台
                   </span>
                 </div>
+                <Button
+                  type="text"
+                  icon={<MenuFoldOutlined />}
+                  onClick={() => setCollapsed(true)}
+                  style={{
+                    color: token.colorWhite,
+                    width: 32,
+                    height: 32,
+                    padding: 0,
+                    flexShrink: 0
+                  }}
+                />
+              </>
+            )}
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            <Menu
+              mode="inline"
+              inlineCollapsed={collapsed}
+              selectedKeys={[activeView]}
+              style={{ borderRight: 0, paddingTop: 12, width: '100%' }}
+              onClick={({ key }) => {
+                changeView(key as ProjectListView);
+              }}
+              items={collapsed ? sideMenuItemsCollapsed : sideMenuItems}
+            />
+          </div>
+
+          <div style={{
+            padding: collapsed ? '12px 8px' : 16,
+            borderTop: `1px solid ${token.colorBorderSecondary}`,
+            flexShrink: 0
+          }}>
+            {collapsed ? (
+              <Space direction="vertical" style={{ width: '100%', alignItems: 'center' }} size={10}>
+                <Button
+                  type="text"
+                  icon={collapsedThemeIcon}
+                  onClick={cycleThemeMode}
+                  title={`主题模式：${mode === 'light' ? '浅色' : mode === 'dark' ? '深色' : '跟随系统'}（点击切换）`}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    background: alphaColor(token.colorBgContainer, 0.65),
+                    border: `1px solid ${token.colorBorder}`,
+                    color: token.colorTextSecondary,
+                  }}
+                />
+                <UserMenu compact />
+              </Space>
+            ) : (
+              <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: token.colorTextTertiary }}>
+                  <span>主题模式</span>
+                  <span>{resolvedMode === 'dark' ? '深色' : '浅色'}</span>
+                </div>
+                <ThemeSwitch block />
+                <UserMenu />
+              </Space>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        background: token.colorPrimary,
+        padding: isMobile ? '0 12px' : '0 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'fixed',
+        top: 0,
+        left: isMobile ? 0 : desktopSiderWidth,
+        right: 0,
+        zIndex: 1000,
+        boxShadow: `0 2px 10px ${alphaColor(token.colorText, 0.16)}`,
+        height: headerHeight,
+        flexShrink: 0,
+        transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'hidden'
+      }}>
+        {isMobile ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Button
+                type="text"
+                icon={<MenuUnfoldOutlined />}
+                onClick={() => setDrawerVisible(true)}
+                style={{
+                  fontSize: 18,
+                  color: token.colorWhite,
+                  width: 36,
+                  height: 36
+                }}
+              />
+            </div>
+
+            <h2 style={{
+              margin: 0,
+              color: token.colorWhite,
+              fontSize: 16,
+              fontWeight: 600,
+              textShadow: `0 2px 4px ${alphaColor(token.colorText, 0.2)}`,
+              flex: 1,
+              textAlign: 'center',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              paddingRight: 36
+            }}>
+              {currentViewTitle}
+            </h2>
+
+            <Badge dot={hasUnreadAnnouncements} offset={[-4, 4]}>
+              <Button
+                type="text"
+                icon={<BellOutlined />}
+                onClick={() => setAnnouncementVisible(true)}
+                style={{
+                  fontSize: 18,
+                  color: token.colorWhite,
+                  width: 36,
+                  height: 36
+                }}
+              />
+            </Badge>
+          </>
+        ) : (
+          <>
+            <div style={{ width: 40, zIndex: 1 }} />
+
+            <h2 style={{
+              margin: 0,
+              color: token.colorWhite,
+              fontSize: '24px',
+              fontWeight: 600,
+              textShadow: `0 2px 4px ${alphaColor(token.colorText, 0.2)}`,
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '45%'
+            }}>
+              {currentViewTitle}
+            </h2>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, zIndex: 1 }}>
+              <Badge dot={hasUnreadAnnouncements} offset={[-4, 4]}>
+                <Button
+                  type="text"
+                  icon={<BellOutlined />}
+                  onClick={() => setAnnouncementVisible(true)}
+                  style={{
+                    color: token.colorWhite,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    background: alphaColor(token.colorWhite, 0.12),
+                    border: `1px solid ${alphaColor(token.colorWhite, 0.18)}`,
+                  }}
+                  title="系统公告"
+                />
+              </Badge>
+              {activeView === 'projects' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                  {projects.length > 0 && (
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                      {[
+                        { label: '创作中', value: activeProjects, unit: '本' },
+                        { label: '已完结', value: completedProjects, unit: '本' },
+                        { label: '总字数', value: totalWords, unit: '字' },
+                      ].map((item, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backdropFilter: 'blur(4px)',
+                            borderRadius: '28px',
+                            minWidth: '56px',
+                            height: '56px',
+                            padding: '0 12px',
+                            boxShadow: `inset 0 0 15px ${alphaColor(token.colorWhite, 0.15)}, 0 4px 10px ${alphaColor(token.colorText, 0.1)}`,
+                            cursor: 'default',
+                            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                            e.currentTarget.style.boxShadow = `inset 0 0 20px ${alphaColor(token.colorWhite, 0.25)}, 0 8px 16px ${alphaColor(token.colorText, 0.15)}`;
+                            e.currentTarget.style.border = `1px solid ${alphaColor(token.colorWhite, 0.1)}`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                            e.currentTarget.style.boxShadow = `inset 0 0 15px ${alphaColor(token.colorWhite, 0.15)}, 0 4px 10px ${alphaColor(token.colorText, 0.1)}`;
+                          }}
+                        >
+                          <span style={{ fontSize: '11px', color: alphaColor(token.colorWhite, 0.9), marginBottom: '2px', lineHeight: 1 }}>
+                            {item.label}
+                          </span>
+                          <span style={{ fontSize: '15px', fontWeight: '600', color: token.colorWhite, lineHeight: 1, fontFamily: 'Monaco, monospace' }}>
+                            {item.label === '总字数' ? formatWordCount(item.value) : item.value}
+                            {item.unit && <span style={{ fontSize: '10px', marginLeft: '2px', opacity: 0.8 }}>{item.unit}</span>}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {isMobile && (
+        <Drawer
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 30,
+                height: 30,
+                background: token.colorPrimary,
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: token.colorWhite,
+                fontSize: 16,
+              }}>
                 <BookOutlined />
               </div>
               <span style={{ fontWeight: 600, fontSize: 16, fontFamily: token.fontFamily }}>AI 小说创作台</span>

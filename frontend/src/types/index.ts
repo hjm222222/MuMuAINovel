@@ -194,12 +194,6 @@ export interface PresetListResponse {
   chapter_analysis_preset_id?: string;
 }
 
-// LinuxDO 授权 URL 响应
-export interface AuthUrlResponse {
-  auth_url: string;
-  state: string;
-}
-
 // 项目类型定义
 export interface Project {
   id: string;  // UUID字符串

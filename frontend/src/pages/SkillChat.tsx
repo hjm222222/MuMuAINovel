@@ -371,7 +371,7 @@ const SkillChat: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', minWidth: 0 }}>
       <div style={{ flexShrink: 0, minWidth: 0, padding: '16px 0', borderBottom: '1px solid #f0f0f0' }}>
         <Title level={4} style={{ marginBottom: 8 }}><ThunderboltOutlined /> Skill 工具箱</Title>
-        <Paragraph type="secondary" style={{ marginBottom: 0 }}>选择一个 Skill 开始创作对话。每个 Skill 都有专业的写作工作流和知识库。</Paragraph>
+        <Paragraph type="secondary" style={{ marginBottom: 0 }}>选择一个 Skill 开始创作对话。每个 Skill 都有专业的写作工作流与参考资料。</Paragraph>
       </div>
 
       {skillsLoading ? (

@@ -338,7 +338,11 @@ async def get_auth_config():
     runtime = await _get_auth_runtime_settings()
     return {
         "local_auth_enabled": settings.LOCAL_AUTH_ENABLED,
-        "linuxdo_enabled": bool(settings.LINUXDO_CLIENT_ID and settings.LINUXDO_CLIENT_SECRET),
+        "linuxdo_enabled": bool(
+            settings.LINUXDO_ENABLED
+            and settings.LINUXDO_CLIENT_ID
+            and settings.LINUXDO_CLIENT_SECRET
+        ),
         "email_auth_enabled": runtime["email_auth_enabled"],
         "email_register_enabled": runtime["email_register_enabled"],
     }
@@ -629,6 +633,9 @@ async def email_reset_password(request: EmailResetPasswordRequest):
 @router.get("/linuxdo/url", response_model=AuthUrlResponse)
 async def get_linuxdo_auth_url():
     """获取 LinuxDO 授权 URL"""
+    if not (settings.LINUXDO_ENABLED and settings.LINUXDO_CLIENT_ID and settings.LINUXDO_CLIENT_SECRET):
+        raise HTTPException(status_code=403, detail="LinuxDO 登录未启用")
+
     state = oauth_service.generate_state()
     auth_url = oauth_service.get_authorization_url(state)
 
@@ -717,6 +724,9 @@ async def linuxdo_callback(
     response: Response = None
 ):
     """LinuxDO OAuth2 回调处理（标准路径）"""
+    if not (settings.LINUXDO_ENABLED and settings.LINUXDO_CLIENT_ID and settings.LINUXDO_CLIENT_SECRET):
+        raise HTTPException(status_code=403, detail="LinuxDO 登录未启用")
+
     return await _handle_callback(code, state, error, response)
 
 
@@ -728,6 +738,9 @@ async def callback_alias(
     response: Response = None
 ):
     """LinuxDO OAuth2 回调处理（兼容路径）"""
+    if not (settings.LINUXDO_ENABLED and settings.LINUXDO_CLIENT_ID and settings.LINUXDO_CLIENT_SECRET):
+        raise HTTPException(status_code=403, detail="LinuxDO 登录未启用")
+
     return await _handle_callback(code, state, error, response)
 
 

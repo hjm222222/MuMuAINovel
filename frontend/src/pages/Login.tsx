@@ -37,7 +37,6 @@ const { Title, Paragraph, Text } = Typography;
 
 interface AuthConfig {
   local_auth_enabled: boolean;
-  linuxdo_enabled: boolean;
   email_auth_enabled: boolean;
   email_register_enabled: boolean;
 }
@@ -74,7 +73,6 @@ export default function Login() {
   const [checking, setChecking] = useState(true);
   const [authConfig, setAuthConfig] = useState<AuthConfig>({
     local_auth_enabled: false,
-    linuxdo_enabled: false,
     email_auth_enabled: false,
     email_register_enabled: false,
   });
@@ -142,7 +140,6 @@ export default function Login() {
           console.error('获取认证配置失败:', error);
           setAuthConfig({
             local_auth_enabled: false,
-            linuxdo_enabled: true,
             email_auth_enabled: false,
             email_register_enabled: false,
           });

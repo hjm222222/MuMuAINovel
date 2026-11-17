@@ -102,6 +102,8 @@ class Settings(BaseSettings):
     mcp_max_rounds: int = 3  # MCP工具调用最大轮数（全局统一控制）
     
     # LinuxDO OAuth2 配置
+    # 本项目为独立部署，默认关闭 LinuxDO 登录
+    LINUXDO_ENABLED: bool = False
     LINUXDO_CLIENT_ID: Optional[str] = None
     LINUXDO_CLIENT_SECRET: Optional[str] = None
     # 回调地址：Docker部署时必须使用实际域名或服务器IP，不能使用localhost

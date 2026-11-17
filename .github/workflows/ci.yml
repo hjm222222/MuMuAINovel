@@ -61,6 +61,13 @@ jobs:
       - name: Build (tsc + vite)
         run: npm run build
 
+      - name: Upload frontend dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
   image:
     name: Docker image build + startup
     runs-on: ubuntu-latest

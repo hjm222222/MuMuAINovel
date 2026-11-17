@@ -28,6 +28,14 @@ from app.config import settings as app_settings, PROJECT_ROOT
 from app.services.ai_service import AIService, create_user_ai_service, create_user_ai_service_with_mcp, normalize_provider
 from app.services.email_service import email_service
 from app.security import validate_ai_http_url
+from app.services.secret_vault import (
+    decrypt_secret,
+    encrypt_secret,
+    mask_secret,
+    mask_stored_secret,
+    prepare_secret_for_storage,
+    resolve_secret_for_runtime,
+)
 
 logger = get_logger(__name__)
 
@@ -97,10 +105,11 @@ def resolve_runtime_ai_config(provider: Optional[str], api_key: Optional[str], a
     """在 API 层解析运行时 AI 配置。
 
     内置适配器（如 Xiaomi MiMo）只在数据库/前端保留 provider 标识与地址，真实 Key
-    仅从后端环境变量读取；传给 AIService 时转换为底层兼容 provider（OpenAI 格式）。
+    仅从后端环境变量读取；用户自带 Key 以密文保存，使用时按需解密；传给 AIService
+    时转换为底层兼容 provider（OpenAI 格式）。
     """
     raw_provider = _normalize_raw_provider(provider)
-    resolved = _apply_provider_defaults(raw_provider, api_key, api_base_url)
+    resolved = _apply_provider_defaults(raw_provider, decrypt_secret(api_key), api_base_url)
     runtime_provider = "openai" if raw_provider == "xiaomi_mimo" else (normalize_provider(raw_provider) or "openai")
     return {
         "raw_provider": raw_provider,
@@ -160,6 +169,54 @@ def _build_ai_service_from_config(
         system_prompt=config.get('system_prompt'),
         enable_mcp=enable_mcp,
     )
+
+
+def _settings_response(settings: Settings) -> SettingsResponse:
+    """构造设置响应：密钥仅返回掩码值。"""
+    api_key_plain = decrypt_secret(settings.api_key or "")
+    cover_api_key_plain = decrypt_secret(settings.cover_api_key or "")
+    payload = {
+        "id": settings.id,
+        "user_id": settings.user_id,
+        "api_provider": settings.api_provider,
+        "api_key": mask_secret(api_key_plain),
+        "api_base_url": settings.api_base_url,
+        "llm_model": settings.llm_model,
+        "temperature": settings.temperature,
+        "max_tokens": settings.max_tokens,
+        "system_prompt": settings.system_prompt,
+        "disable_thinking": bool(getattr(settings, "disable_thinking", False)),
+        "cover_api_provider": settings.cover_api_provider,
+        "cover_api_key": mask_secret(cover_api_key_plain),
+        "cover_api_base_url": settings.cover_api_base_url,
+        "cover_image_model": settings.cover_image_model,
+        "cover_enabled": bool(getattr(settings, "cover_enabled", False)),
+        "preferences": settings.preferences,
+        "created_at": settings.created_at,
+        "updated_at": settings.updated_at,
+        "api_key_set": bool(api_key_plain),
+        "cover_api_key_set": bool(cover_api_key_plain),
+    }
+    return SettingsResponse(**payload)
+
+
+def _apply_secret_fields(
+    settings_dict: Dict[str, Any],
+    current_settings: Optional[Settings],
+) -> Dict[str, Any]:
+    """保存前处理密钥字段：掩码值保留原密文，空值清空，新值加密落库。"""
+    current_api_key = current_settings.api_key if current_settings else ""
+    current_cover_api_key = current_settings.cover_api_key if current_settings else ""
+
+    if "api_key" in settings_dict:
+        settings_dict["api_key"] = prepare_secret_for_storage(
+            settings_dict["api_key"], current_api_key
+        )
+    if "cover_api_key" in settings_dict:
+        settings_dict["cover_api_key"] = prepare_secret_for_storage(
+            settings_dict["cover_api_key"], current_cover_api_key
+        )
+    return settings_dict
 
 
 def require_login(request: Request):
@@ -368,17 +425,27 @@ async def get_settings(
         logger.info(f"用户 {user.user_id} 的设置已从.env同步到数据库")
     
     logger.info(f"用户 {user.user_id} 获取已保存的设置")
-    return settings
+    return _settings_response(settings)
 
 
 @router.post("/cover/test")
 async def test_cover_settings(
     data: CoverSettingsTestRequest,
     user: User = Depends(require_login),
+    db: AsyncSession = Depends(get_db),
 ):
+    stored_key = ""
+    result = await db.execute(
+        select(Settings).where(Settings.user_id == user.user_id)
+    )
+    stored_settings = result.scalar_one_or_none()
+    if stored_settings:
+        stored_key = stored_settings.cover_api_key or ""
+
+    cover_api_key = resolve_secret_for_runtime(data.cover_api_key, stored_key)
     result = await cover_generation_service.test_cover_settings(
         provider=data.cover_api_provider,
-        api_key=data.cover_api_key,
+        api_key=cover_api_key,
         api_base_url=data.cover_api_base_url,
         model=data.cover_image_model,
     )
@@ -521,6 +588,7 @@ async def save_settings(
     
     # 准备数据
     settings_dict = data.model_dump(exclude_unset=True)
+    settings_dict = _apply_secret_fields(settings_dict, settings)
     
     if settings:
         # 更新现有设置
@@ -538,10 +606,12 @@ async def save_settings(
             active_preset = next((p for p in presets if p.get('is_active')), None)
             if active_preset:
                 preset_config = active_preset.get('config', {})
-                # 检查配置是否发生变化
+                # 检查配置是否发生变化（密钥按明文比较）
+                current_api_key = decrypt_secret(settings_dict.get('api_key', settings.api_key))
+                preset_api_key = decrypt_secret(preset_config.get('api_key'))
                 config_changed = (
                     preset_config.get('api_provider') != settings_dict.get('api_provider', settings.api_provider) or
-                    preset_config.get('api_key') != settings_dict.get('api_key', settings.api_key) or
+                    preset_api_key != current_api_key or
                     preset_config.get('api_base_url') != settings_dict.get('api_base_url', settings.api_base_url) or
                     preset_config.get('llm_model') != settings_dict.get('llm_model', settings.llm_model) or
                     preset_config.get('temperature') != settings_dict.get('temperature', settings.temperature) or
@@ -571,7 +641,7 @@ async def save_settings(
         await db.refresh(settings)
         logger.info(f"用户 {user.user_id} 创建设置")
     
-    return settings
+    return _settings_response(settings)
 
 
 @router.put("", response_model=SettingsResponse)
@@ -594,6 +664,7 @@ async def update_settings(
     
     # 更新设置
     update_data = data.model_dump(exclude_unset=True)
+    update_data = _apply_secret_fields(update_data, settings)
     for key, value in update_data.items():
         setattr(settings, key, value)
     
@@ -601,7 +672,7 @@ async def update_settings(
     await db.refresh(settings)
     logger.info(f"用户 {user.user_id} 更新设置")
     
-    return settings
+    return _settings_response(settings)
 
 
 @router.delete("")
@@ -632,13 +703,14 @@ async def get_available_models(
     api_key: Optional[str] = "",
     api_base_url: Optional[str] = "",
     provider: str = "openai",
-    user: User = Depends(require_login)
+    user: User = Depends(require_login),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     从配置的 API 获取可用的模型列表
     
     Args:
-        api_key: API 密钥
+        api_key: API 密钥（留空或为掩码值时使用已保存的密钥）
         api_base_url: API 基础 URL
         provider: API 提供商 (openai, anthropic, azure, custom)
     
@@ -647,7 +719,15 @@ async def get_available_models(
     """
     try:
         raw_provider = _normalize_raw_provider(provider)
-        resolved_config = resolve_runtime_ai_config(raw_provider, api_key, api_base_url)
+        stored_key = ""
+        stored_result = await db.execute(
+            select(Settings).where(Settings.user_id == user.user_id)
+        )
+        stored_settings = stored_result.scalar_one_or_none()
+        if stored_settings:
+            stored_key = stored_settings.api_key or ""
+        effective_api_key = resolve_secret_for_runtime(api_key, stored_key)
+        resolved_config = resolve_runtime_ai_config(raw_provider, effective_api_key, api_base_url)
         provider = resolved_config["api_provider"]
         api_key = resolved_config["api_key"]
         api_base_url = validate_ai_http_url(resolved_config["api_base_url"])
@@ -978,7 +1058,11 @@ async def check_function_calling_support(data: ApiTestRequest):
 
 
 @router.post("/test")
-async def test_api_connection(data: ApiTestRequest):
+async def test_api_connection(
+    data: ApiTestRequest,
+    user: User = Depends(require_login),
+    db: AsyncSession = Depends(get_db),
+):
     """
     测试 API 连接和配置是否正确
     
@@ -989,7 +1073,15 @@ async def test_api_connection(data: ApiTestRequest):
         测试结果包含状态、响应时间和详细信息
     """
     raw_provider = _normalize_raw_provider(data.provider)
-    resolved_config = resolve_runtime_ai_config(raw_provider, data.api_key, data.api_base_url)
+    stored_key = ""
+    stored_result = await db.execute(
+        select(Settings).where(Settings.user_id == user.user_id)
+    )
+    stored_settings = stored_result.scalar_one_or_none()
+    if stored_settings:
+        stored_key = stored_settings.api_key or ""
+    effective_api_key = resolve_secret_for_runtime(data.api_key, stored_key)
+    resolved_config = resolve_runtime_ai_config(raw_provider, effective_api_key, data.api_base_url)
     api_key = resolved_config["api_key"]
     api_base_url = resolved_config["api_base_url"]
     provider = resolved_config["api_provider"]
@@ -1165,6 +1257,13 @@ async def test_api_connection(data: ApiTestRequest):
 
 # ========== API配置预设管理（零数据库改动方案）==========
 
+def _mask_preset_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """生成预设配置的脱敏副本，密钥仅返回掩码值。"""
+    masked = dict(config)
+    masked["api_key"] = mask_secret(decrypt_secret(config.get("api_key")))
+    return masked
+
+
 async def get_user_settings(user_id: str, db: AsyncSession) -> Settings:
     """获取用户settings，如果不存在则创建"""
     result = await db.execute(
@@ -1222,7 +1321,10 @@ async def get_presets(
     logger.info(f"用户 {user.user_id} 获取预设列表，共 {len(presets)} 个")
     
     return {
-        "presets": presets,
+        "presets": [
+            {**preset, "config": _mask_preset_config(preset.get("config", {}))}
+            for preset in presets
+        ],
         "total": len(presets),
         "active_preset_id": active_preset_id,
         "chapter_analysis_preset_id": chapter_analysis_preset_id
@@ -1251,17 +1353,18 @@ async def create_preset(
     api_presets = prefs.get('api_presets', {'presets': [], 'version': '1.0'})
     presets = api_presets.get('presets', [])
     
-    # 创建新预设
+    # 创建新预设（密钥以密文保存）
+    preset_config = data.config.model_dump()
+    preset_config["api_provider"] = _normalize_raw_provider(data.config.api_provider)
+    preset_config["api_key"] = encrypt_secret(preset_config.get("api_key"))
+
     new_preset = {
         "id": f"preset_{int(datetime.now().timestamp() * 1000)}",
         "name": data.name,
         "description": data.description,
         "is_active": False,
         "created_at": datetime.now().isoformat(),
-        "config": {
-            **data.config.model_dump(),
-            "api_provider": _normalize_raw_provider(data.config.api_provider)
-        }
+        "config": preset_config
     }
     
     presets.append(new_preset)
@@ -1274,7 +1377,7 @@ async def create_preset(
     await db.commit()
     
     logger.info(f"用户 {user.user_id} 创建预设: {data.name}")
-    return new_preset
+    return {**new_preset, "config": _mask_preset_config(preset_config)}
 
 
 @router.put("/presets/{preset_id}", response_model=PresetResponse)
@@ -1311,10 +1414,17 @@ async def update_preset(
     if data.description is not None:
         target_preset['description'] = data.description
     if data.config is not None:
-        target_preset['config'] = {
-            **data.config.model_dump(),
-            'api_provider': _normalize_raw_provider(data.config.api_provider)
-        }
+        current_config = target_preset.get('config', {})
+        new_config = data.config.model_dump()
+        new_config['api_provider'] = _normalize_raw_provider(data.config.api_provider)
+        incoming_key = new_config.get('api_key') or ""
+        current_key_plain = decrypt_secret(current_config.get('api_key'))
+        if current_key_plain and incoming_key == mask_secret(current_key_plain):
+            # 前端回传掩码值，保留原密文
+            new_config['api_key'] = current_config.get('api_key')
+        else:
+            new_config['api_key'] = encrypt_secret(incoming_key)
+        target_preset['config'] = new_config
     
     # 保存回preferences
     prefs['api_presets'] = api_presets
@@ -1323,7 +1433,7 @@ async def update_preset(
     await db.commit()
     
     logger.info(f"用户 {user.user_id} 更新预设: {preset_id}")
-    return target_preset
+    return {**target_preset, "config": _mask_preset_config(target_preset.get('config', {}))}
 
 
 @router.delete("/presets/{preset_id}")
@@ -1402,9 +1512,9 @@ async def activate_preset(
     
     # 应用配置到Settings主字段
     config = target_preset['config']
-    resolved_config = _apply_provider_defaults(config.get('api_provider'), config.get('api_key'), config.get('api_base_url'))
+    resolved_config = _apply_provider_defaults(config.get('api_provider'), decrypt_secret(config.get('api_key')), config.get('api_base_url'))
     settings.api_provider = _normalize_raw_provider(config['api_provider'])
-    settings.api_key = config.get('api_key') or ""
+    settings.api_key = encrypt_secret(decrypt_secret(config.get('api_key')))
     settings.api_base_url = resolved_config["api_base_url"]
     settings.llm_model = config['llm_model']
     settings.temperature = config['temperature']
@@ -1493,7 +1603,7 @@ async def test_preset(
     # 确保传递完整参数，与当前配置测试保持一致
     config = target_preset['config']
     test_request = ApiTestRequest(
-        api_key=config['api_key'],
+        api_key=decrypt_secret(config.get('api_key')),
         api_base_url=config.get('api_base_url', ''),
         provider=config['api_provider'],
         llm_model=config['llm_model'],
@@ -1522,7 +1632,7 @@ async def create_preset_from_current(
     # 从当前Settings主字段读取配置
     current_config = APIKeyPresetConfig(
         api_provider=_normalize_raw_provider(settings.api_provider),
-        api_key=settings.api_key,
+        api_key=decrypt_secret(settings.api_key or ""),
         api_base_url=settings.api_base_url,
         llm_model=settings.llm_model,
         temperature=settings.temperature,

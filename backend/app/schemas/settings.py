@@ -40,6 +40,8 @@ class SettingsResponse(SettingsBase):
     
     id: str
     user_id: str
+    api_key_set: bool = Field(default=False, description="是否已配置 API 密钥")
+    cover_api_key_set: bool = Field(default=False, description="是否已配置封面图片 API 密钥")
     created_at: datetime
     updated_at: datetime
 

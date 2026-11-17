@@ -21,6 +21,7 @@ from app.services.cover_providers.base_cover_provider import BaseCoverProvider, 
 from app.services.cover_providers.gemini_cover_provider import GeminiCoverProvider
 from app.services.cover_providers.grok_cover_provider import GrokCoverProvider
 from app.services.prompt_service import PromptService
+from app.services.secret_vault import decrypt_secret
 
 logger = get_logger(__name__)
 
@@ -208,7 +209,7 @@ class CoverGenerationService:
     def _build_provider(self, settings: Settings) -> BaseCoverProvider:
         return self._build_provider_from_values(
             provider=settings.cover_api_provider or "",
-            api_key=settings.cover_api_key or "",
+            api_key=decrypt_secret(settings.cover_api_key or ""),
             api_base_url=settings.cover_api_base_url,
         )
 

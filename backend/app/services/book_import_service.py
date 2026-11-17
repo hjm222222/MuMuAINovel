@@ -43,6 +43,7 @@ from app.schemas.book_import import (
     ProjectSuggestion,
 )
 from app.services.ai_service import AIService, create_user_ai_service_with_mcp
+from app.services.secret_vault import decrypt_secret
 from app.services.prompt_service import PromptService
 from app.services.txt_parser_service import txt_parser_service
 
@@ -1625,7 +1626,7 @@ class BookImportService:
 
         return create_user_ai_service_with_mcp(
             api_provider=user_settings.api_provider,
-            api_key=user_settings.api_key,
+            api_key=decrypt_secret(user_settings.api_key or ""),
             api_base_url=user_settings.api_base_url or "",
             model_name=user_settings.llm_model,
             temperature=user_settings.temperature,

@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [hasSettings, setHasSettings] = useState(false);
   const [isDefaultSettings, setIsDefaultSettings] = useState(false);
+  const [apiKeySet, setApiKeySet] = useState(false);
   const [modelOptions, setModelOptions] = useState<Array<{ value: string; label: string; description: string }>>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsFetched, setModelsFetched] = useState(false);
@@ -88,6 +89,7 @@ export default function SettingsPage() {
     setInitialLoading(true);
     try {
       const settings = await settingsApi.getSettings();
+      setApiKeySet(Boolean(settings.api_key_set));
       form.setFieldsValue({
         ...defaultCoverSettings,
         ...settings,
@@ -1081,6 +1083,11 @@ export default function SettingsPage() {
                             }
                             name="api_key"
                             rules={builtInKeyProviders.includes(selectedProvider) ? [] : [{ required: true, message: '请输入API密钥' }]}
+                            extra={
+                              apiKeySet && !builtInKeyProviders.includes(selectedProvider)
+                                ? '已保存密钥（仅显示掩码），保持不变直接保存即可；清空输入框会删除该密钥。'
+                                : undefined
+                            }
                           >
                             <Input.Password
                               size={isMobile ? 'middle' : 'large'}

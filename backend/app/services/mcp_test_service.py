@@ -15,6 +15,7 @@ from app.models.mcp_plugin import MCPPlugin
 from app.models.settings import Settings as UserSettings
 from app.mcp import mcp_client, MCPPluginConfig  # 使用新的统一门面
 from app.services.ai_service import create_user_ai_service
+from app.services.secret_vault import decrypt_secret
 from app.schemas.mcp_plugin import MCPTestResult
 from app.services.prompt_service import prompt_service
 from app.logger import get_logger, summarize_log_value
@@ -182,7 +183,7 @@ class MCPTestService:
             
             ai_service = create_user_ai_service(
                 api_provider=user_settings.api_provider,
-                api_key=user_settings.api_key,
+                api_key=decrypt_secret(user_settings.api_key or ""),
                 api_base_url=user_settings.api_base_url,
                 model_name=user_settings.llm_model,
                 temperature=0.3,

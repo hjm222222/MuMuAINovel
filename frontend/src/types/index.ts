@@ -76,6 +76,7 @@ export interface Settings {
   user_id: string;
   api_provider: string;
   api_key: string;
+  api_key_set?: boolean;
   api_base_url: string;
   llm_model: string;
   temperature: number;
@@ -84,6 +85,7 @@ export interface Settings {
   disable_thinking?: boolean;
   cover_api_provider?: string;
   cover_api_key?: string;
+  cover_api_key_set?: boolean;
   cover_api_base_url?: string;
   cover_image_model?: string;
   cover_enabled?: boolean;

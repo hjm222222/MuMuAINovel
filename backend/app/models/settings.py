@@ -12,7 +12,7 @@ class Settings(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String(50), nullable=False, unique=True, index=True, comment="用户ID")
     api_provider = Column(String(50), default="openai", comment="API提供商")
-    api_key = Column(String(500), comment="API密钥")
+    api_key = Column(String(1000), comment="API密钥（密文存储）")
     api_base_url = Column(String(500), comment="自定义API地址")
     llm_model = Column(String(100), default="gpt-4", comment="模型名称")
     temperature = Column(Float, default=0.7, comment="温度参数")
@@ -22,7 +22,7 @@ class Settings(Base):
 
     # 封面图片生成配置
     cover_api_provider = Column(String(50), comment="封面图片API提供商")
-    cover_api_key = Column(String(500), comment="封面图片API密钥")
+    cover_api_key = Column(String(1000), comment="封面图片API密钥（密文存储）")
     cover_api_base_url = Column(String(500), comment="封面图片自定义API地址")
     cover_image_model = Column(String(100), comment="封面图片模型名称")
     cover_enabled = Column(Boolean, default=False, server_default="0", nullable=False, comment="是否启用封面图片生成")

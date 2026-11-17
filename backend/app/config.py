@@ -114,6 +114,9 @@ class Settings(BaseSettings):
     LOCAL_AUTH_PASSWORD: Optional[str] = None  # 本地登录密码
     LOCAL_AUTH_DISPLAY_NAME: str = "本地用户"  # 本地用户显示名称
     
+    # 用户自带 API Key 的加密密钥（生产环境必须配置为高强度随机值）
+    CREDENTIAL_ENCRYPTION_KEY: Optional[str] = None
+
     # 会话配置
     SESSION_EXPIRE_MINUTES: int = 120  # 会话过期时间（分钟），默认2小时
     SESSION_REFRESH_THRESHOLD_MINUTES: int = 30  # 会话刷新阈值（分钟），剩余时间少于此值时可刷新

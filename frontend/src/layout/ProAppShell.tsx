@@ -7,9 +7,10 @@ import type { ReactNode } from 'react';
 
 export interface ShellMenuItem {
   path: string;
-  name: string;
+  name: ReactNode;
   key?: string;
   icon?: ReactNode;
+  children?: ShellMenuItem[];
 }
 
 export interface ProAppShellProps {
@@ -25,6 +26,8 @@ export interface ProAppShellProps {
   headerRight?: ReactNode;
   headerHeight?: number;
   siderFooter?: (collapsed: boolean) => ReactNode;
+  menuType?: 'group';
+  contentOverflow?: 'auto' | 'hidden';
   children?: ReactNode;
 }
 
@@ -44,12 +47,24 @@ export default function ProAppShell({
   headerRight,
   headerHeight = 64,
   siderFooter,
+  menuType,
+  contentOverflow = 'auto',
   children,
 }: ProAppShellProps) {
   const location = useLocation();
   const { token } = theme.useToken();
-  const isMobile = window.innerWidth <= 768;
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth <= 768
+  );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const selectedKey = selectedKeys.join(',');
   useEffect(() => {
@@ -78,9 +93,13 @@ export default function ProAppShell({
       location={location}
       route={{ routes: menuItems }}
       selectedKeys={selectedKeys}
+      menu={menuType ? { type: menuType } : undefined}
       menuProps={{
         onClick: ({ key, domEvent }) => {
           domEvent.preventDefault();
+          if (isMobile) {
+            setMobileMenuOpen(false);
+          }
           onMenuClick(String(key));
         },
       }}
@@ -143,7 +162,16 @@ export default function ProAppShell({
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, minWidth: 0 }}>{headerRight}</div>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>{children}</div>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: contentOverflow,
+            overflowX: 'hidden',
+          }}
+        >
+          {children}
+        </div>
       </div>
     </ProLayout>
   );

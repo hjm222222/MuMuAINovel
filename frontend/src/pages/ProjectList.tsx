@@ -395,35 +395,49 @@ export default function ProjectList() {
 
   const shellMenuItems: ShellMenuItem[] = [
     {
-      path: 'projects',
+      path: '/projects',
       key: 'projects',
       name: '我的书架',
       icon: <BookOutlined />,
     },
     {
-      path: 'book-import',
-      key: 'book-import',
-      name: '拆书导入',
-      icon: <UploadOutlined />,
+      path: '/creative-tools',
+      key: 'creative-tools',
+      name: '创作工具',
+      children: [
+        {
+          path: '/book-import',
+          key: 'book-import',
+          name: '拆书导入',
+          icon: <UploadOutlined />,
+        },
+        {
+          path: '/prompts',
+          key: 'prompts',
+          name: '提示词管理',
+          icon: <FileSearchOutlined />,
+        },
+      ],
     },
     {
-      path: 'prompts',
-      key: 'prompts',
-      name: '提示词管理',
-      icon: <FileSearchOutlined />,
-    },
-    {
-      path: 'settings',
-      key: 'settings',
-      name: 'API 设置',
-      icon: <SettingOutlined />,
-    },
-    ...(isAdmin ? [{
-      path: 'system-settings',
-      key: 'system-settings',
+      path: '/system',
+      key: 'system',
       name: '系统设置',
-      icon: <MailOutlined />,
-    }] : []),
+      children: [
+        {
+          path: '/settings',
+          key: 'settings',
+          name: 'API 设置',
+          icon: <SettingOutlined />,
+        },
+        ...(isAdmin ? [{
+          path: '/system-settings',
+          key: 'system-settings',
+          name: '系统设置',
+          icon: <MailOutlined />,
+        }] : []),
+      ],
+    },
   ];
 
 
@@ -551,6 +565,7 @@ export default function ProjectList() {
         title={branding.app_name}
         logo={<img src="/logo.svg" alt={branding.app_name} style={{ width: 28, height: 28, display: 'block' }} />}
         menuItems={shellMenuItems}
+        menuType="group"
         selectedKeys={[activeView]}
         collapsed={collapsed}
         onCollapseChange={setCollapsed}

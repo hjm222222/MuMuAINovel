@@ -73,6 +73,7 @@ import type {
   AgentToolDecision,
   AgentExecutionStep,
   UsageSummary,
+  BrandingConfig,
 } from '../types';
 
 interface MCPPluginSimpleCreate {
@@ -212,6 +213,10 @@ export const authApi = {
   logout: () => api.post('/auth/logout'),
 };
 
+export const siteApi = {
+  getBranding: () => api.get<unknown, BrandingConfig>('/site/branding'),
+};
+
 export const userApi = {
   getCurrentUser: () => api.get<unknown, User>('/users/current'),
 
@@ -231,6 +236,13 @@ export const userApi = {
       username: string;
       default_password?: string;
     }>('/users/reset-password', { user_id: userId, new_password: newPassword }),
+
+  deleteMyData: (scope: 'creative' | 'all') =>
+    api.delete<unknown, {
+      message: string;
+      scope: string;
+      deleted: Record<string, number>;
+    }>('/users/me/data', { params: { scope, confirm: true } }),
 };
 
 export const settingsApi = {

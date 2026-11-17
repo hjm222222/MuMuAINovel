@@ -31,6 +31,7 @@ import { authApi } from '../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AnnouncementModal from '../components/AnnouncementModal';
 import ThemeSwitch from '../components/ThemeSwitch';
+import { useBranding } from '../config/brandingContext';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -82,6 +83,7 @@ export default function Login() {
   const [emailRegisterForm] = Form.useForm<EmailRegisterValues>();
   const [resetPasswordForm] = Form.useForm<ResetPasswordValues>();
   const { token } = theme.useToken();
+  const { branding } = useBranding();
   const alphaColor = (color: string, alpha: number) => `color-mix(in srgb, ${color} ${(alpha * 100).toFixed(0)}%, transparent)`;
   const primaryButtonShadow = `0 8px 20px ${alphaColor(token.colorPrimary, 0.28)}`;
   const [showAnnouncement, setShowAnnouncement] = useState(false);
@@ -810,12 +812,12 @@ export default function Login() {
                   >
                     <img
                       src="/logo.svg"
-                      alt="AI 小说创作台"
+                      alt={branding.app_name}
                       style={{ width: 26, height: 26, filter: 'brightness(0) invert(1)' }}
                     />
                   </div>
                   <Title level={3} style={{ margin: 0, color: token.colorText }}>
-                    AI 小说创作台
+                    {branding.app_name}
                   </Title>
                 </Space>
 
@@ -906,7 +908,7 @@ export default function Login() {
                   letterSpacing: 0.4,
                 }}
               >
-                © 2026 AI 小说创作台 · 基于 MuMuAINovel 修改 · GPLv3 License
+                © 2026 {branding.app_name} · {branding.footer_note}
               </Paragraph>
             </section>
           </Col>
@@ -928,7 +930,7 @@ export default function Login() {
                     欢迎回来
                   </Title>
                   <Paragraph style={{ marginBottom: 0, color: token.colorTextSecondary }}>
-                    登录 AI 小说创作台，继续你的小说创作项目。
+                    登录 {branding.app_name}，继续你的小说创作项目。
                   </Paragraph>
                 </Space>
 

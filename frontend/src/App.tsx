@@ -23,6 +23,7 @@ import SkillManage from './pages/SkillManage';
 // import Polish from './pages/Polish';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
+import Legal from './pages/Legal';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppFooter from './components/AppFooter';
 import SpringFestival from './components/SpringFestival';
@@ -41,6 +42,7 @@ function App() {
       >
         <Routes>
           <Route path="/login" element={<><Login /><AppFooter /></>} />
+          <Route path="/legal" element={<><Legal /><AppFooter /></>} />
           <Route path="/auth/callback" element={<AuthCallback />} />
 
           <Route path="/" element={<ProtectedRoute><><ProjectList /><AppFooter sidebarWidth={220} /></></ProtectedRoute>} />

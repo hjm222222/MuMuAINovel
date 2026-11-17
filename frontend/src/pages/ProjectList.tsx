@@ -11,6 +11,7 @@ import UserMenu from '../components/UserMenu';
 import ChangelogFloatingButton from '../components/ChangelogFloatingButton';
 import ThemeSwitch from '../components/ThemeSwitch';
 import { useThemeMode } from '../theme/useThemeMode';
+import { useBranding } from '../config/brandingContext';
 import SettingsPage from './Settings';
 import SystemSettingsPage from './SystemSettings';
 import PromptTemplates from './PromptTemplates';
@@ -80,6 +81,7 @@ export default function ProjectList() {
   const { refreshProjects, deleteProject } = useProjectSync();
   const { mode, resolvedMode, setMode } = useThemeMode();
   const { token } = theme.useToken();
+  const { branding } = useBranding();
   const alphaColor = (color: string, alpha: number) => `color-mix(in srgb, ${color} ${(alpha * 100).toFixed(0)}%, transparent)`;
 
   const { announcements, loading: announcementsLoading, hasUnread: hasUnreadAnnouncements, refresh: refreshAnnouncements, markAllRead: markAllAnnouncementsRead } = useAnnouncements();
@@ -543,7 +545,7 @@ export default function ProjectList() {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}>
-                    AI 小说创作台
+                    {branding.app_name}
                   </span>
                 </div>
                 <Button
@@ -783,7 +785,7 @@ export default function ProjectList() {
               }}>
                 <BookOutlined />
               </div>
-              <span style={{ fontWeight: 600, fontSize: 16, fontFamily: token.fontFamily }}>AI 小说创作台</span>
+              <span style={{ fontWeight: 600, fontSize: 16, fontFamily: token.fontFamily }}>{branding.app_name}</span>
             </div>
           }
           placement="left"

@@ -4,6 +4,10 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
+from app.services.data_deletion_service import delete_all_data, delete_creative_data
 from app.user_manager import user_manager, User
 from app.user_password import password_manager
 
@@ -39,6 +43,39 @@ class ResetPasswordRequest(BaseModel):
 async def get_current_user(user: User = Depends(require_login)):
     """获取当前登录用户信息"""
     return user.dict()
+
+
+@router.delete("/me/data")
+async def delete_my_data(
+    request: Request,
+    scope: str = "creative",
+    confirm: bool = False,
+    db: AsyncSession = Depends(get_db)
+):
+    """删除当前用户的数据。
+
+    Args:
+        scope: creative 仅删除创作数据（保留账号与个人设置）；all 连同账号一并删除
+        confirm: 必须为 true，避免误操作
+    """
+    user = require_login(request)
+    if not confirm:
+        raise HTTPException(status_code=400, detail="删除数据需要携带 confirm=true 参数")
+
+    if scope not in ("creative", "all"):
+        raise HTTPException(status_code=400, detail="scope 仅支持 creative 或 all")
+
+    user_id = user.user_id
+    if scope == "all":
+        deleted = await delete_all_data(db, user_id)
+    else:
+        deleted = await delete_creative_data(db, user_id)
+
+    return {
+        "message": "创作数据已删除" if scope == "creative" else "账号及全部数据已删除",
+        "scope": scope,
+        "deleted": deleted,
+    }
 
 
 @router.get("", response_model=List[dict])

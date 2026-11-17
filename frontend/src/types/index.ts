@@ -1,3 +1,19 @@
+// 站点品牌与合规配置
+export interface BrandingConfig {
+  app_name: string;
+  slogan: string;
+  description: string;
+  primary_color: string;
+  accent_color: string;
+  footer_note: string;
+  upstream_name: string;
+  upstream_url: string;
+  license: string;
+  license_url: string;
+  ai_content_notice: string;
+  version: string;
+}
+
 // 用户类型定义
 export interface User {
   user_id: string;

@@ -26,6 +26,7 @@ import { useCharacterSync, useOutlineSync, useChapterSync } from '../store/hooks
 import { projectApi } from '../services/api';
 import ThemeSwitch from '../components/ThemeSwitch';
 import { useThemeMode } from '../theme/useThemeMode';
+import { useBranding } from '../config/brandingContext';
 import { getStoredSidebarCollapsed, setStoredSidebarCollapsed } from '../utils/sidebarState';
 import FloatingTaskPanel from '../components/FloatingTaskPanel';
 import ProjectAgentPanel from '../components/project-agent/ProjectAgentPanel';
@@ -51,6 +52,7 @@ export default function ProjectDetail() {
     ));
   }, []);
   const { token } = theme.useToken();
+  const { branding } = useBranding();
   const alphaColor = (color: string, alpha: number) => `color-mix(in srgb, ${color} ${(alpha * 100).toFixed(0)}%, transparent)`;
   const { mode, resolvedMode, setMode } = useThemeMode();
   const cycleThemeMode = () => {
@@ -492,7 +494,7 @@ export default function ProjectDetail() {
                 }}>
                   <BookOutlined />
                 </div>
-                <span style={{ fontWeight: 600, fontSize: 16 }}>AI 小说创作台</span>
+                <span style={{ fontWeight: 600, fontSize: 16 }}>{branding.app_name}</span>
               </div>
             }
             placement="left"
@@ -588,7 +590,7 @@ export default function ProjectDetail() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                       }}>
-                        AI 小说创作台
+                        {branding.app_name}
                       </span>
                     </div>
                     <Button

@@ -5,6 +5,7 @@ import type { PropsWithChildren } from 'react';
 import { getThemeConfig, type ResolvedThemeMode } from './themeConfig';
 import { ThemeModeContext } from './themeContext';
 import { getStoredThemeMode, setStoredThemeMode, type ThemeMode } from './themeStorage';
+import { useBranding } from '../config/brandingContext';
 
 const getSystemResolvedMode = (): ResolvedThemeMode => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -33,6 +34,7 @@ const hexToRgba = (hexColor: string, alpha: number): string => {
 };
 
 export const ThemeProvider = ({ children }: PropsWithChildren) => {
+  const { branding } = useBranding();
   const [mode, setModeState] = useState<ThemeMode>(() => getStoredThemeMode());
   const [systemMode, setSystemMode] = useState<ResolvedThemeMode>(() => getSystemResolvedMode());
   const transitionCleanupRef = useRef<number | null>(null);
@@ -59,7 +61,26 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   const resolvedMode: ResolvedThemeMode = getResolvedMode(mode, systemMode);
-  const themeConfig = useMemo(() => getThemeConfig(resolvedMode), [resolvedMode]);
+  const themeConfig = useMemo(() => {
+    const baseConfig = getThemeConfig(resolvedMode);
+    if (!branding.primary_color) {
+      return baseConfig;
+    }
+    return {
+      ...baseConfig,
+      token: {
+        ...baseConfig.token,
+        colorPrimary: branding.primary_color,
+      },
+      components: {
+        ...baseConfig.components,
+        Tooltip: {
+          ...baseConfig.components?.Tooltip,
+          colorBgSpotlight: branding.primary_color,
+        },
+      },
+    };
+  }, [resolvedMode, branding.primary_color]);
 
   const setMode = useCallback((nextMode: ThemeMode) => {
     if (nextMode === mode) {

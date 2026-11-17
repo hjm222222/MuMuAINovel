@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import type { Project } from '../types';
 import { bookshelfCardStyles, bookshelfCardHoverHandlers } from '../components/CardStyles';
 import { useThemeMode } from '../theme/useThemeMode';
+import { useBranding } from '../config/brandingContext';
 
 const { Paragraph } = Typography;
 
@@ -55,6 +56,7 @@ export default function BookshelfPage({
   formatDate,
 }: BookshelfPageProps) {
   const { token } = theme.useToken();
+  const { branding } = useBranding();
   const { resolvedMode } = useThemeMode();
   const isDark = resolvedMode === 'dark';
   const alphaColor = (color: string, alpha: number) => `color-mix(in srgb, ${color} ${(alpha * 100).toFixed(0)}%, transparent)`;
@@ -219,7 +221,7 @@ export default function BookshelfPage({
 
       {showApiTip && projects.length === 0 && (
         <Alert
-          message="欢迎使用 AI 小说创作台"
+          message={`欢迎使用 ${branding.app_name}`}
           description={
             <div style={{
               display: 'flex',

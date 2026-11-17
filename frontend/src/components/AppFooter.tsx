@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Typography, Space, Divider, Badge, Grid, theme } from 'antd';
 import { GithubOutlined, CopyrightOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { VERSION_INFO, getVersionString } from '../config/version';
+import { useBranding } from '../config/brandingContext';
 import { checkLatestVersion } from '../services/versionService';
+import { Link as RouterLink } from 'react-router-dom';
 
 const { Text, Link } = Typography;
 const { useBreakpoint } = Grid;
@@ -18,6 +20,7 @@ export default function AppFooter({ sidebarWidth = 0 }: AppFooterProps) {
   const [latestVersion, setLatestVersion] = useState('');
   const [releaseUrl, setReleaseUrl] = useState('');
   const { token } = theme.useToken();
+  const { branding } = useBranding();
   const alphaColor = (color: string, alpha: number) => `color-mix(in srgb, ${color} ${(alpha * 100).toFixed(0)}%, transparent)`;
 
   useEffect(() => {
@@ -94,7 +97,7 @@ export default function AppFooter({ sidebarWidth = 0 }: AppFooterProps) {
                 }}
                 title={hasUpdate ? `发现新版本 v${latestVersion}，点击查看` : '当前版本'}
               >
-                <strong style={{ color: token.colorText }}>{VERSION_INFO.projectName}</strong>
+                <strong style={{ color: token.colorText }}>{branding.app_name}</strong>
                 <span>{getVersionString()}</span>
               </Text>
             </Badge>
@@ -162,7 +165,7 @@ export default function AppFooter({ sidebarWidth = 0 }: AppFooterProps) {
                 }}
                 title={hasUpdate ? `发现新版本 v${latestVersion}，点击查看` : '当前版本'}
               >
-                <strong style={{ color: token.colorText }}>{VERSION_INFO.projectName}</strong>
+                <strong style={{ color: token.colorText }}>{branding.app_name}</strong>
                 <span>{getVersionString()}</span>
               </Text>
             </Badge>
@@ -186,7 +189,7 @@ export default function AppFooter({ sidebarWidth = 0 }: AppFooterProps) {
 
             {/* 许可证 */}
             <Link
-              href={VERSION_INFO.licenseUrl}
+              href={branding.license_url}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -198,8 +201,22 @@ export default function AppFooter({ sidebarWidth = 0 }: AppFooterProps) {
               }}
             >
               <CopyrightOutlined style={{ fontSize: 11 }} />
-              <span>{VERSION_INFO.license}</span>
+              <span>{branding.license}</span>
             </Link>
+
+            {/* 合规说明 */}
+            <RouterLink
+              to="/legal"
+              style={{
+                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                color: token.colorTextSecondary,
+              }}
+            >
+              <span>隐私政策 · 用户协议</span>
+            </RouterLink>
 
             {/* 更新时间 */}
             <Text
@@ -228,12 +245,12 @@ export default function AppFooter({ sidebarWidth = 0 }: AppFooterProps) {
             >
               <span>基于</span>
               <Link
-                href={VERSION_INFO.upstreamUrl}
+                href={branding.upstream_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: token.colorTextSecondary, fontSize: 12 }}
               >
-                {VERSION_INFO.upstreamName}
+                {branding.upstream_name}
               </Link>
               <span>修改</span>
             </Text>

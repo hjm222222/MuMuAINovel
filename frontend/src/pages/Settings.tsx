@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, Select, Slider, InputNumber, message, Space, Typography, Spin, Modal, Alert, Grid, Tabs, List, Tag, Popconfirm, Empty, Row, Col, Switch, theme } from 'antd';
+import { Card, Form, Input, Button, Select, Slider, InputNumber, message, Space, Typography, Spin, Modal, Alert, Grid, Tabs, List, Tag, Popconfirm, Empty, Row, Col, Switch, Descriptions, theme } from 'antd';
 import { SaveOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, PlusOutlined, EditOutlined, CopyOutlined, PictureOutlined, LineChartOutlined } from '@ant-design/icons';
-import { settingsApi } from '../services/api';
+import { settingsApi, userApi } from '../services/api';
+import { useBranding } from '../config/brandingContext';
+import { useNavigate } from 'react-router-dom';
 import type { SettingsUpdate, APIKeyPreset, PresetCreateRequest, APIKeyPresetConfig, UsageSummary } from '../types';
 
 const { Title, Text } = Typography;
@@ -11,6 +13,8 @@ const { TextArea } = Input;
 
 export default function SettingsPage() {
   const { token } = theme.useToken();
+  const { branding } = useBranding();
+  const navigate = useNavigate();
   const screens = useBreakpoint();
   const isMobile = !screens.md; // md断点是768px
   const [form] = Form.useForm();
@@ -22,6 +26,7 @@ export default function SettingsPage() {
   const [apiKeySet, setApiKeySet] = useState(false);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [usageLoading, setUsageLoading] = useState(false);
+  const [deletingData, setDeletingData] = useState(false);
   const [modelOptions, setModelOptions] = useState<Array<{ value: string; label: string; description: string }>>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsFetched, setModelsFetched] = useState(false);
@@ -98,6 +103,32 @@ export default function SettingsPage() {
       message.error('加载用量统计失败');
     } finally {
       setUsageLoading(false);
+    }
+  };
+
+  const handleDeleteCreativeData = async () => {
+    setDeletingData(true);
+    try {
+      const result = await userApi.deleteMyData('creative');
+      message.success(result?.message || '创作数据已删除');
+      loadUsageSummary();
+    } catch {
+      message.error('删除失败，请稍后重试');
+    } finally {
+      setDeletingData(false);
+    }
+  };
+
+  const handleDeleteAllData = async () => {
+    setDeletingData(true);
+    try {
+      await userApi.deleteMyData('all');
+      message.success('账号及全部数据已删除，即将返回登录页');
+      setTimeout(() => navigate('/login'), 1200);
+    } catch {
+      message.error('删除失败，请稍后重试');
+    } finally {
+      setDeletingData(false);
     }
   };
 
@@ -899,6 +930,68 @@ export default function SettingsPage() {
         </Card>
       </Space>
     </Spin>
+  );
+
+  const renderPrivacyPanel = () => (
+    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Alert
+        type="info"
+        showIcon
+        message={branding.ai_content_notice}
+      />
+
+      <Card size="small" title="站点信息" style={{ background: token.colorFillAlter, borderColor: token.colorBorderSecondary }}>
+        <Descriptions
+          bordered
+          size="small"
+          column={1}
+          items={[
+            { key: 'name', label: '站点名称', children: branding.app_name },
+            { key: 'slogan', label: '站点定位', children: branding.slogan },
+            { key: 'version', label: '版本', children: branding.version },
+            { key: 'upstream', label: '上游项目', children: branding.upstream_name },
+            { key: 'license', label: '许可证', children: branding.license },
+          ]}
+        />
+      </Card>
+
+      <Card size="small" title="合规文档">
+        <Space direction="vertical" size={8}>
+          <Space wrap>
+            <Button icon={<InfoCircleOutlined />} onClick={() => navigate('/legal')}>隐私政策与用户协议</Button>
+            <Text type="secondary">查看数据收集范围、AI 生成内容标识与数据删除说明</Text>
+          </Space>
+        </Space>
+      </Card>
+
+      <Card size="small" title="数据删除">
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Text type="secondary">
+            删除后无法恢复，请先导出需要保留的稿件与项目数据。删除创作数据会保留账号与个人设置。
+          </Text>
+          <Space wrap>
+            <Popconfirm
+              title="删除全部创作数据？"
+              description="将删除所有项目、章节与用量记录，操作不可恢复。"
+              okText="确认删除"
+              cancelText="取消"
+              onConfirm={handleDeleteCreativeData}
+            >
+              <Button danger loading={deletingData} icon={<DeleteOutlined />}>删除创作数据</Button>
+            </Popconfirm>
+            <Popconfirm
+              title="注销账号并删除全部数据？"
+              description="将删除账号及所有数据，操作不可恢复。"
+              okText="确认注销"
+              cancelText="取消"
+              onConfirm={handleDeleteAllData}
+            >
+              <Button danger type="primary" loading={deletingData} icon={<DeleteOutlined />}>注销账号</Button>
+            </Popconfirm>
+          </Space>
+        </Space>
+      </Card>
+    </Space>
   );
 
   const renderPresetsList = () => (
@@ -1778,6 +1871,11 @@ export default function SettingsPage() {
                   key: 'usage',
                   label: <Space size={6}><LineChartOutlined />用量统计</Space>,
                   children: renderUsageSummary(),
+                },
+                {
+                  key: 'privacy',
+                  label: <Space size={6}><InfoCircleOutlined />数据与隐私</Space>,
+                  children: renderPrivacyPanel(),
                 },
               ]}
             />

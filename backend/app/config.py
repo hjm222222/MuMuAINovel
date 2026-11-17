@@ -25,11 +25,23 @@ class Settings(BaseSettings):
     """应用配置"""
     
     # 应用配置
-    app_name: str = "MuMuAINovel"
+    app_name: str = "AI 小说创作台"
     app_version: str = "1.5.8"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     debug: bool = False
+
+    # 品牌配置（可通过环境变量覆盖，便于换主题品牌）
+    app_slogan: str = "只做创作台的自托管 AI 小说工作台"
+    app_description: str = "面向小说创作者的 AI 创作台：世界设定、大纲、角色、章节写作与全书导出。"
+    brand_primary_color: str = "#4D8088"
+    brand_accent_color: str = "#C08A6A"
+    brand_footer_note: str = "基于 MuMuAINovel 修改 · GPL v3"
+    upstream_name: str = "MuMuAINovel"
+    upstream_url: str = "https://github.com/xiamuceer-j/MuMuAINovel"
+    license_name: str = "GPL-3.0"
+    license_url: str = "https://www.gnu.org/licenses/gpl-3.0.html"
+    ai_content_notice: str = "本站生成内容由 AI 辅助完成，请在发布或商用前进行人工审校。"
     
     # 日志配置
     log_level: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -132,7 +144,7 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = False
     SMTP_USE_SSL: bool = True
     SMTP_FROM_EMAIL: Optional[str] = None
-    SMTP_FROM_NAME: str = "MuMuAINovel"
+    SMTP_FROM_NAME: str = "AI 小说创作台"
     EMAIL_AUTH_ENABLED: bool = True
     EMAIL_REGISTER_ENABLED: bool = True
     EMAIL_VERIFICATION_CODE_TTL_MINUTES: int = 10

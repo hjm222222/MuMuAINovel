@@ -119,7 +119,4 @@ export const EventNames = {
   // 统一后台任务生命周期事件
   BACKGROUND_TASK_CREATED: 'backgroundTask:created',
   BACKGROUND_TASK_SETTLED: 'backgroundTask:settled',
-
-  // 视图切换事件
-  SWITCH_TO_MCP_VIEW: 'view:switchToMcp',
 } as const;

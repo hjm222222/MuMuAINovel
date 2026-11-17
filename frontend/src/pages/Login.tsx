@@ -12,7 +12,6 @@ import {
   Space,
   Spin,
   Tabs,
-  Tag,
   Typography,
   message,
   theme,
@@ -769,16 +768,15 @@ export default function Login() {
                 justifyContent: 'space-between',
                 position: 'relative',
                 overflow: 'hidden',
-                backgroundColor: alphaColor(token.colorBgContainer, 0.78),
-                backgroundImage: `linear-gradient(${alphaColor(token.colorTextSecondary, 0.06)} 1px, transparent 1px), linear-gradient(90deg, ${alphaColor(token.colorTextSecondary, 0.06)} 1px, transparent 1px)`,
-                backgroundSize: '68px 68px',
+                backgroundColor: token.colorBgLayout,
+                backgroundImage: `linear-gradient(180deg, ${alphaColor(token.colorPrimary, 0.06)} 0%, transparent 42%)`,
               }}
             >
               <div
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: `radial-gradient(circle at 25% 20%, ${alphaColor(token.colorPrimary, 0.12)} 0%, transparent 50%)`,
+                  background: `radial-gradient(circle at 18% 12%, ${alphaColor(token.colorPrimary, 0.14)} 0%, transparent 46%), radial-gradient(circle at 82% 78%, ${alphaColor(token.colorWarning, 0.1)} 0%, transparent 44%)`,
                   pointerEvents: 'none',
                 }}
               />
@@ -820,40 +818,35 @@ export default function Login() {
 
                 <Space direction="vertical" size={32} style={{ width: '100%' }}>
                   <div style={{ maxWidth: 'min(860px, 100%)' }}>
+                    <div className="app-eyebrow" style={{ marginBottom: 20 }}>
+                      AI Novel Studio
+                    </div>
                     <Title
                       level={1}
+                      className="app-display"
                       style={{
                         marginBottom: 22,
                         color: token.colorText,
-                        lineHeight: 1.12,
-                        fontWeight: 800,
-                        fontSize: 'clamp(52px, 3vw, 78px)',
+                        lineHeight: 1.18,
+                        fontWeight: 600,
+                        fontSize: 'clamp(38px, 3.1vw, 56px)',
+                        letterSpacing: '0.01em',
                       }}
                     >
-                      基于 AI 的
+                      {branding.app_name}
                       <br />
-                      <span
-                        style={{
-                          backgroundImage: `linear-gradient(90deg, ${token.colorPrimary} 0%, #d946ef 100%)`,
-                          WebkitBackgroundClip: 'text',
-                          backgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          color: token.colorPrimary,
-                        }}
-                      >
-                        智能小说创作助手
-                      </span>
+                      <span style={{ color: token.colorPrimary }}>让灵感落成书稿</span>
                     </Title>
                     <Paragraph
                       style={{
-                        fontSize: 'clamp(18px, 1vw, 22px)',
-                        lineHeight: 1.85,
+                        fontSize: 'clamp(15px, 1vw, 17px)',
+                        lineHeight: 1.9,
                         color: token.colorTextSecondary,
                         marginBottom: 0,
-                        maxWidth: 800,
+                        maxWidth: 620,
                       }}
                     >
-                      从灵感到成稿，围绕「多模型协同、创作流程自动化、角色关系管理、章节精修」构建一体化创作工作台。
+                      从世界设定、人物关系到分章成稿，一条安静而专注的创作动线。模型由你自带，文稿只属于你。
                     </Paragraph>
                   </div>
 
@@ -862,14 +855,15 @@ export default function Login() {
                       <Col span={12} key={item.title}>
                         <Card
                           size="small"
-                          bordered={false}
                           style={{
                             height: '100%',
-                            minHeight: 120,
+                            minHeight: 118,
                             borderRadius: 16,
-                            background: alphaColor(token.colorBgContainer, 0.9),
+                            border: `1px solid ${token.colorBorderSecondary}`,
+                            background: token.colorBgContainer,
+                            boxShadow: 'none',
                           }}
-                          bodyStyle={{ padding: 16 }}
+                          styles={{ body: { padding: 18 } }}
                         >
                           <Space direction="vertical" size={8}>
                             <Space size={10} style={{ color: token.colorPrimary, fontWeight: 700, fontSize: 15 }}>
@@ -886,13 +880,17 @@ export default function Login() {
                   </Row>
                 </Space>
 
-                <Space size={[10, 14]} wrap style={{ maxWidth: 'min(860px, 100%)' }}>
-                  <Tag color="blue">OpenAI</Tag>
-                  <Tag color="geekblue">Gemini</Tag>
-                  <Tag color="purple">Claude</Tag>
-                  <Tag color="green">Docker Compose</Tag>
-                  <Tag color="gold">PostgreSQL</Tag>
-                </Space>
+                <Paragraph
+                  style={{
+                    marginBottom: 0,
+                    fontSize: 13,
+                    letterSpacing: '0.06em',
+                    color: token.colorTextTertiary,
+                    maxWidth: 'min(860px, 100%)',
+                  }}
+                >
+                  兼容 OpenAI / Gemini / Claude 等接口 · 单机 Docker 部署 · 数据自持
+                </Paragraph>
               </div>
 
               <Paragraph
@@ -921,13 +919,16 @@ export default function Login() {
                 background: token.colorBgLayout,
               }}
             >
-              <div style={{ width: '100%', maxWidth: 520 }}>
-                <Space direction="vertical" size={4}>
-                  <Title level={2} style={{ marginBottom: 0, fontWeight: 700, color: token.colorText }}>
+              <div className="app-surface" style={{ width: '100%', maxWidth: 460, padding: '40px 38px' }}>
+                <div className="app-eyebrow" style={{ marginBottom: 16 }}>
+                  Sign in
+                </div>
+                <Space direction="vertical" size={6}>
+                  <Title level={2} className="app-display" style={{ marginBottom: 0, fontWeight: 600, color: token.colorText }}>
                     欢迎回来
                   </Title>
                   <Paragraph style={{ marginBottom: 0, color: token.colorTextSecondary }}>
-                    登录 {branding.app_name}，继续你的小说创作项目。
+                    登录 {branding.app_name}，继续你的创作。
                   </Paragraph>
                 </Space>
 

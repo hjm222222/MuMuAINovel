@@ -219,11 +219,11 @@ body {
 }
 
 .ant-tooltip .ant-tooltip-inner {
-  background: var(--app-tooltip-bg, #884d5c);
+  background: var(--app-tooltip-bg, #20262b);
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-weight: 500;
-  box-shadow: 0 4px 12px var(--app-tooltip-shadow, rgba(136, 77, 92, 0.3));
+  box-shadow: 0 10px 24px -12px var(--app-tooltip-shadow, rgba(32, 38, 43, 0.5));
   white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -242,3 +242,203 @@ body {
   }
 }
 
+
+/* ==========================================================
+   设计语言：纸墨书卷（Paper & Ink）
+   统一字体、留白、阴影与控件质感，页面级内联样式仍优先
+   ========================================================== */
+
+:root {
+  --app-font-body: 'Inter', 'HarmonyOS Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  --app-font-display: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', Georgia, serif;
+  --app-radius-sm: 10px;
+  --app-radius-md: 14px;
+  --app-radius-lg: 20px;
+  --app-hairline: #e9e4da;
+  --app-shadow-soft: 0 1px 2px rgba(32, 38, 43, 0.05), 0 12px 28px -18px rgba(32, 38, 43, 0.28);
+  --app-shadow-lift: 0 2px 6px rgba(32, 38, 43, 0.07), 0 26px 52px -26px rgba(32, 38, 43, 0.38);
+  --app-eyebrow-color: #8a939b;
+}
+
+[data-theme-resolved='dark'] {
+  --app-hairline: #262e34;
+  --app-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 28px -18px rgba(0, 0, 0, 0.65);
+  --app-shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.45), 0 26px 52px -26px rgba(0, 0, 0, 0.8);
+  --app-eyebrow-color: #7e8991;
+}
+
+body {
+  font-family: var(--app-font-body);
+  letter-spacing: 0.01em;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ant-color-primary, #2f6b63) 26%, transparent);
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ant-color-primary, #2f6b63) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* 标题：衬线展示字体，书卷气 */
+.app-display {
+  font-family: var(--app-font-display);
+  font-weight: 600;
+  letter-spacing: 0.015em;
+}
+
+.app-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--app-eyebrow-color);
+}
+
+.app-eyebrow::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.app-surface {
+  background: var(--ant-color-bg-container, #fff);
+  border: 1px solid var(--app-hairline);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow-soft);
+}
+
+.app-hairline {
+  height: 1px;
+  background: var(--app-hairline);
+  border: 0;
+}
+
+/* Ant Design 质感微调（页面内联样式仍然胜出） */
+body .ant-card {
+  box-shadow: var(--app-shadow-soft);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+body .ant-card-hoverable:hover {
+  box-shadow: var(--app-shadow-lift);
+  border-color: color-mix(in srgb, var(--ant-color-primary, #2f6b63) 28%, transparent);
+}
+
+body .ant-btn {
+  letter-spacing: 0.02em;
+}
+
+body .ant-btn-primary {
+  box-shadow: 0 12px 24px -16px color-mix(in srgb, var(--ant-color-primary, #2f6b63) 90%, transparent);
+}
+
+body .ant-btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px -16px color-mix(in srgb, var(--ant-color-primary, #2f6b63) 95%, transparent);
+}
+
+body .ant-btn-text:hover {
+  background: color-mix(in srgb, var(--ant-color-primary, #2f6b63) 8%, transparent);
+}
+
+body .ant-input,
+body .ant-input-affix-wrapper,
+body .ant-select-selector,
+body .ant-picker {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+body .ant-table-wrapper .ant-table-thead > tr > th {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-size: 12.5px;
+}
+
+body .ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom-color: var(--app-hairline);
+}
+
+body .ant-modal-content {
+  box-shadow: var(--app-shadow-lift);
+}
+
+body .ant-modal-header {
+  padding-bottom: 12px;
+}
+
+body .ant-menu-inline .ant-menu-item {
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+body .ant-menu-inline .ant-menu-item-selected {
+  font-weight: 600;
+}
+
+body .ant-tabs-top > .ant-tabs-nav::before {
+  border-bottom-color: var(--app-hairline);
+}
+
+body .ant-tag {
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+body .ant-divider {
+  border-color: var(--app-hairline);
+}
+
+body .ant-empty-description {
+  color: var(--app-eyebrow-color);
+}
+
+body .ant-dropdown .ant-dropdown-menu {
+  box-shadow: var(--app-shadow-lift);
+  border: 1px solid var(--app-hairline);
+}
+
+/* 滚动条：更轻的呈现 */
+:root {
+  --app-scroll-thumb: rgba(32, 38, 43, 0.18);
+  --app-scroll-track: transparent;
+}
+
+[data-theme-resolved='dark'] {
+  --app-scroll-thumb: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--app-scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--app-scroll-thumb);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--app-scroll-thumb) 140%, transparent);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}

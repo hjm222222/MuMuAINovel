@@ -257,13 +257,10 @@ export default function BookshelfPage({
       <Spin spinning={loading}>
         <div style={{
           ...bookshelfCardStyles.container,
-          borderRadius: isMobile ? 12 : 16,
-          border: `1px solid ${isDark ? alphaColor(token.colorBorder, 0.42) : alphaColor(token.colorText, 0.06)}`,
-          backgroundColor: isDark ? alphaColor(token.colorBgContainer, 0.42) : alphaColor(token.colorBgContainer, 0.72),
-          backgroundImage: `radial-gradient(${alphaColor(token.colorText, isDark ? 0.16 : 0.08)} 1px, transparent 0)`,
-          backgroundSize: '18px 18px',
-          boxShadow: `inset 0 1px 0 ${alphaColor(token.colorWhite, isDark ? 0.08 : 0.45)}`,
-          padding: isMobile ? '12px' : '18px',
+          borderRadius: isMobile ? 14 : 20,
+          border: `1px solid ${token.colorBorderSecondary}`,
+          backgroundColor: 'transparent',
+          padding: isMobile ? '4px' : '8px 4px',
           ...(isMobile && {
             gridTemplateColumns: '1fr',
             gap: '14px',
@@ -282,7 +279,7 @@ export default function BookshelfPage({
               <div style={{
                 position: 'absolute',
                 inset: 0,
-                background: `linear-gradient(180deg, ${alphaColor(isDark ? token.colorBgContainer : token.colorWhite, isDark ? 0.14 : 0.42)} 0%, transparent 22%, transparent 78%, ${alphaColor(token.colorWarning, isDark ? 0.1 : 0.05)} 100%)`,
+                background: 'transparent',
                 pointerEvents: 'none'
               }} />
               <div style={{
@@ -303,9 +300,10 @@ export default function BookshelfPage({
                   borderRadius: '50%',
                   display: 'grid',
                   placeItems: 'center',
-                  background: `linear-gradient(180deg, ${alphaColor(token.colorPrimary, isDark ? 0.18 : 0.12)} 0%, ${alphaColor(token.colorPrimary, isDark ? 0.28 : 0.2)} 100%)`,
+                  background: alphaColor(token.colorPrimary, isDark ? 0.16 : 0.1),
                   color: token.colorPrimary,
-                  boxShadow: `inset 0 1px 0 ${alphaColor(token.colorWhite, isDark ? 0.18 : 0.75)}`,
+                  boxShadow: 'none',
+                  border: `1px solid ${alphaColor(token.colorPrimary, isDark ? 0.3 : 0.18)}`,
                 }}>
                   <BookOutlined style={{ fontSize: isMobile ? 24 : 28 }} />
                 </div>
@@ -319,8 +317,7 @@ export default function BookshelfPage({
                     style={{
                       height: isMobile ? 42 : 52,
                       fontSize: isMobile ? 14 : 16,
-                      borderRadius: 10,
-                      boxShadow: `0 10px 18px ${alphaColor(token.colorPrimary, isDark ? 0.14 : 0.22)}`,
+                      borderRadius: 12,
                     }}
                     block
                   >
@@ -333,10 +330,11 @@ export default function BookshelfPage({
                     style={{
                       height: isMobile ? 42 : 52,
                       fontSize: isMobile ? '14px' : '16px',
-                      borderRadius: 10,
-                      borderColor: alphaColor(token.colorWarning, isDark ? 0.34 : 0.5),
-                      color: `color-mix(in srgb, ${token.colorWarning} ${isDark ? 78 : 72}%, ${token.colorText} ${isDark ? 22 : 28}%)`,
-                      background: `linear-gradient(180deg, ${alphaColor(token.colorWarning, isDark ? 0.12 : 0.12)} 0%, ${alphaColor(token.colorWarning, isDark ? 0.2 : 0.2)} 100%)`,
+                      borderRadius: 12,
+                      borderColor: token.colorBorderSecondary,
+                      color: token.colorTextSecondary,
+                      background: 'transparent',
+                      boxShadow: 'none',
                     }}
                     block
                   >

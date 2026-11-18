@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Button, Modal, message, Spin, Space, Tag, Typography, Upload, Checkbox, Tooltip, theme, Badge } from 'antd';
-import { EditOutlined, BookOutlined, CalendarOutlined, FileTextOutlined, TrophyOutlined, SettingOutlined, UploadOutlined, FileSearchOutlined, MenuUnfoldOutlined, MenuFoldOutlined, BulbOutlined, MoonOutlined, DesktopOutlined, MailOutlined, BellOutlined } from '@ant-design/icons';
+import { EditOutlined, BookOutlined, CalendarOutlined, FileTextOutlined, TrophyOutlined, SettingOutlined, UploadOutlined, FileSearchOutlined, MenuUnfoldOutlined, MenuFoldOutlined, BulbOutlined, MoonOutlined, DesktopOutlined, MailOutlined, BellOutlined, LineChartOutlined } from '@ant-design/icons';
 import { authApi, projectApi } from '../services/api';
 import { useStore } from '../store';
 import { useProjectSync } from '../store/hooks';
@@ -16,6 +16,7 @@ import SettingsPage from './Settings';
 import SystemSettingsPage from './SystemSettings';
 import PromptTemplates from './PromptTemplates';
 import BookImport from './BookImport';
+import UsageDashboard from './UsageDashboard';
 import BookshelfPage from './BookshelfPage';
 import { getStoredSidebarCollapsed, setStoredSidebarCollapsed } from '../utils/sidebarState';
 import AnnouncementTimelineModal from '../components/AnnouncementTimelineModal';
@@ -45,11 +46,11 @@ const formatWordCount = (count: number): string => {
   }
 };
 
-type ProjectListView = 'projects' | 'settings' | 'system-settings' | 'prompts' | 'book-import';
+type ProjectListView = 'projects' | 'settings' | 'system-settings' | 'prompts' | 'book-import' | 'usage';
 
 const parseViewFromSearch = (search: string): ProjectListView => {
   const view = new URLSearchParams(search).get('view');
-  if (view === 'settings' || view === 'system-settings' || view === 'prompts' || view === 'book-import' || view === 'projects') {
+  if (view === 'settings' || view === 'system-settings' || view === 'prompts' || view === 'book-import' || view === 'usage' || view === 'projects') {
     return view;
   }
   return 'projects';
@@ -389,7 +390,9 @@ export default function ProjectList() {
         ? '拆书导入'
         : activeView === 'system-settings'
           ? '系统设置'
-          : 'API 设置';
+          : activeView === 'usage'
+            ? '用量统计'
+            : 'API 设置';
 
   const isAdmin = !!currentUser?.is_admin;
 
@@ -429,6 +432,12 @@ export default function ProjectList() {
           key: 'settings',
           name: 'API 设置',
           icon: <SettingOutlined />,
+        },
+        {
+          path: '/usage',
+          key: 'usage',
+          name: '用量统计',
+          icon: <LineChartOutlined />,
         },
         ...(isAdmin ? [{
           path: '/system-settings',
@@ -660,6 +669,7 @@ export default function ProjectList() {
           {activeView === 'settings' && <SettingsPage />}
           {activeView === 'system-settings' && <SystemSettingsPage />}
           {activeView === 'prompts' && <PromptTemplates />}
+          {activeView === 'usage' && <UsageDashboard />}
 
           {activeView === 'book-import' && <BookImport />}
 

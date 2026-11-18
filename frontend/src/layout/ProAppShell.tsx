@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, theme } from 'antd';
-import { MenuUnfoldOutlined } from '@ant-design/icons';
+import { MenuUnfoldOutlined, SearchOutlined } from '@ant-design/icons';
 import { ProLayout } from '@ant-design/pro-components';
 import { useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import CommandPalette, { flattenMenuItems } from './CommandPalette';
 
 export interface ShellMenuItem {
   path: string;
@@ -57,6 +58,25 @@ export default function ProAppShell({
     () => typeof window !== 'undefined' && window.innerWidth <= 768
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  const paletteEntries = useMemo(() => flattenMenuItems(menuItems), [menuItems]);
+
+  const hotkeyLabel = useMemo(() => {
+    if (typeof navigator === 'undefined') return 'Ctrl K';
+    return /Mac|iPhone|iPad/i.test(navigator.platform) ? '⌘ K' : 'Ctrl K';
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -159,7 +179,29 @@ export default function ProAppShell({
             )}
             {headerLeft}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, minWidth: 0 }}>{headerRight}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, minWidth: 0 }}>
+            {!isMobile && (
+              <Button
+                type="text"
+                size="small"
+                icon={<SearchOutlined style={{ color: token.colorTextTertiary }} />}
+                onClick={() => setPaletteOpen(true)}
+                style={{
+                  color: token.colorTextTertiary,
+                  background: token.colorFillQuaternary,
+                  border: `1px solid ${token.colorBorderSecondary}`,
+                  borderRadius: 999,
+                  height: 30,
+                  paddingInline: 12,
+                  fontSize: 12,
+                }}
+              >
+                搜索
+                <span style={{ marginLeft: 8, opacity: 0.75 }}>{hotkeyLabel}</span>
+              </Button>
+            )}
+            {headerRight}
+          </div>
         </div>
 
         <div
@@ -173,6 +215,16 @@ export default function ProAppShell({
           {children}
         </div>
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        entries={paletteEntries}
+        onSelect={(key) => {
+          onMenuClick(key);
+          if (isMobile) setMobileMenuOpen(false);
+        }}
+      />
     </ProLayout>
   );
 }

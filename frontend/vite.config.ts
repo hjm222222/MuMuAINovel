@@ -29,6 +29,8 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           // Ant Design UI库（最大的依赖）
           'vendor-antd': ['antd', '@ant-design/icons'],
+          // Ant Design Pro 组件库（ProLayout / ProTable 等）
+          'vendor-pro': ['@ant-design/pro-components'],
           // 其他工具库
           'vendor-utils': ['axios', 'dayjs', 'zustand'],
           // Diff查看器（较大的组件）

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from 'react';
 import { List, Button, Modal, Form, Input, Select, message, Empty, Space, Badge, Tag, Card, InputNumber, Alert, Radio, Descriptions, Collapse, Popconfirm, Pagination, theme, Switch } from 'antd';
 import { EditOutlined, FileTextOutlined, ThunderboltOutlined, LockOutlined, DownloadOutlined, SettingOutlined, FundOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined, RocketOutlined, StopOutlined, InfoCircleOutlined, CaretRightOutlined, DeleteOutlined, BookOutlined, FormOutlined, PlusOutlined, ReadOutlined } from '@ant-design/icons';
 import { useStore } from '../store';
@@ -643,18 +643,73 @@ export default function Chapters() {
   }, [chapters]);
 
   // 章节查询过滤（前端过滤，减少渲染压力）
+  const deferredSearchKeyword = useDeferredValue(chapterSearchKeyword);
   const filteredSortedChapters = useMemo(() => {
-    const keyword = chapterSearchKeyword.trim().toLowerCase();
+    const keyword = deferredSearchKeyword.trim().toLowerCase();
     if (!keyword) return sortedChapters;
 
     return sortedChapters.filter((chapter) => {
       return (
         String(chapter.chapter_number).includes(keyword) ||
         chapter.title.toLowerCase().includes(keyword) ||
-        (chapter.outline_title || '').toLowerCase().includes(keyword)
+        (chapter.outline_title || '').toLowerCase().includes(keyword) ||
+        (chapter.content || '').toLowerCase().includes(keyword)
       );
     });
-  }, [sortedChapters, chapterSearchKeyword]);
+  }, [sortedChapters, deferredSearchKeyword]);
+
+  const buildContentSnippet = useCallback(
+    (chapter: Chapter) => {
+      const keyword = deferredSearchKeyword.trim();
+      if (!keyword) return null;
+      const lowerKeyword = keyword.toLowerCase();
+      if (chapter.title.toLowerCase().includes(lowerKeyword)) return null;
+      if ((chapter.outline_title || '').toLowerCase().includes(lowerKeyword)) return null;
+
+      const content = chapter.content || '';
+      const index = content.toLowerCase().indexOf(lowerKeyword);
+      if (index < 0) return null;
+
+      const start = Math.max(0, index - 24);
+      const end = Math.min(content.length, index + keyword.length + 56);
+      return {
+        before: `${start > 0 ? '…' : ''}${content.slice(start, index)}`,
+        match: content.slice(index, index + keyword.length),
+        after: `${content.slice(index + keyword.length, end)}${end < content.length ? '…' : ''}`,
+      };
+    },
+    [deferredSearchKeyword]
+  );
+
+  const renderChapterDescription = (item: Chapter) => {
+    const snippet = buildContentSnippet(item);
+    if (snippet) {
+      return (
+        <div style={{ marginTop: 8, color: token.colorTextSecondary, lineHeight: 1.6, fontSize: isMobile ? 12 : 14 }}>
+          {snippet.before}
+          <mark
+            style={{
+              background: token.colorWarningBg,
+              color: token.colorText,
+              padding: '0 2px',
+              borderRadius: 3,
+            }}
+          >
+            {snippet.match}
+          </mark>
+          {snippet.after}
+        </div>
+      );
+    }
+    return item.content ? (
+      <div style={{ marginTop: 8, color: token.colorTextSecondary, lineHeight: 1.6, fontSize: isMobile ? 12 : 14 }}>
+        {item.content.substring(0, isMobile ? 80 : 150)}
+        {item.content.length > (isMobile ? 80 : 150) && '...'}
+      </div>
+    ) : (
+      <span style={{ color: token.colorTextTertiary, fontSize: isMobile ? 12 : 14 }}>暂无内容</span>
+    );
+  };
 
   // 分页后的扁平章节
   const pagedSortedChapters = useMemo(() => {
@@ -2027,7 +2082,7 @@ export default function Chapters() {
         <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
           <Input.Search
             allowClear
-            placeholder="搜索章节（序号/标题/大纲）"
+            placeholder="搜索章节（序号/标题/大纲/正文）"
             value={chapterSearchKeyword}
             onChange={(e) => setChapterSearchKeyword(e.target.value)}
             style={{ width: isMobile ? '100%' : 280 }}
@@ -2176,16 +2231,7 @@ export default function Chapters() {
                         </Space>
                       </div>
                     }
-                    description={
-                      item.content ? (
-                        <div style={{ marginTop: 8, color: token.colorTextSecondary, lineHeight: 1.6, fontSize: isMobile ? 12 : 14 }}>
-                          {item.content.substring(0, isMobile ? 80 : 150)}
-                          {item.content.length > (isMobile ? 80 : 150) && '...'}
-                        </div>
-                      ) : (
-                        <span style={{ color: token.colorTextTertiary, fontSize: isMobile ? 12 : 14 }}>暂无内容</span>
-                      )
-                    }
+                    description={renderChapterDescription(item)}
                   />
 
                   {isMobile && (
@@ -2401,16 +2447,7 @@ export default function Chapters() {
                               </Space>
                             </div>
                           }
-                          description={
-                            item.content ? (
-                              <div style={{ marginTop: 8, color: token.colorTextSecondary, lineHeight: 1.6, fontSize: isMobile ? 12 : 14 }}>
-                                {item.content.substring(0, isMobile ? 80 : 150)}
-                                {item.content.length > (isMobile ? 80 : 150) && '...'}
-                              </div>
-                            ) : (
-                              <span style={{ color: token.colorTextTertiary, fontSize: isMobile ? 12 : 14 }}>暂无内容</span>
-                            )
-                          }
+                          description={renderChapterDescription(item)}
                         />
 
                         {isMobile && (

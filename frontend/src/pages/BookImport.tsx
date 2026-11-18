@@ -5,7 +5,7 @@ import {
   Button,
   Card,
   Col,
-  Collapse,
+  Drawer,
   Empty,
   Input,
   InputNumber,
@@ -25,9 +25,12 @@ import {
 } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { InboxOutlined, PlayCircleOutlined, ReloadOutlined, StopOutlined, WarningOutlined, RedoOutlined } from '@ant-design/icons';
+import { ProTable } from '@ant-design/pro-components';
+import type { ProColumns } from '@ant-design/pro-components';
 import { bookImportApi } from '../services/api';
 import type {
   BookImportApplyPayload,
+  BookImportChapter,
   BookImportExtractMode,
   BookImportPreview,
   BookImportStepFailure,
@@ -120,6 +123,7 @@ export default function BookImport() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [taskStatus, setTaskStatus] = useState<BookImportTask | null>(null);
   const [preview, setPreview] = useState<BookImportPreview | null>(null);
+  const [editingChapterIndex, setEditingChapterIndex] = useState<number | null>(null);
 
   const [creatingTask, setCreatingTask] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -587,6 +591,48 @@ export default function BookImport() {
     });
   };
 
+  const chapterColumns: ProColumns<BookImportChapter>[] = [
+    {
+      title: '章节',
+      dataIndex: 'chapter_number',
+      width: 84,
+      align: 'center',
+      sorter: (a, b) => a.chapter_number - b.chapter_number,
+      render: (_, record) => <Tag color="blue">第 {record.chapter_number} 章</Tag>,
+    },
+    {
+      title: '标题',
+      dataIndex: 'title',
+      ellipsis: true,
+      copyable: true,
+      width: 260,
+    },
+    {
+      title: '摘要',
+      dataIndex: 'summary',
+      ellipsis: true,
+      render: (_, record) => record.summary || <Text type="secondary">（无）</Text>,
+    },
+    {
+      title: '字数',
+      dataIndex: 'content',
+      width: 100,
+      align: 'right',
+      sorter: (a, b) => (a.content?.length ?? 0) - (b.content?.length ?? 0),
+      render: (_, record) => <Text type="secondary">{(record.content?.length ?? 0).toLocaleString()}</Text>,
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      width: 96,
+      render: (_, __, index) => [
+        <Button key="edit" type="link" size="small" onClick={() => setEditingChapterIndex(index)}>
+          编辑
+        </Button>,
+      ],
+    },
+  ];
+
   return (
     <div
       style={{
@@ -975,35 +1021,61 @@ export default function BookImport() {
                 </Row>
               </Card>
 
-              <Card size="small" title={`章节（${preview.chapters.length}）`}>
-                <Collapse
-                  items={preview.chapters.map((ch, idx) => ({
-                    key: String(idx),
-                    label: `第 ${ch.chapter_number} 章 · ${ch.title}`,
-                    children: (
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        <Input
-                          value={ch.title}
-                          addonBefore="标题"
-                          onChange={(e) => updateChapter(idx, { title: e.target.value })}
-                        />
-                        <TextArea
-                          rows={2}
-                          value={ch.summary}
-                          placeholder="章节摘要"
-                          onChange={(e) => updateChapter(idx, { summary: e.target.value })}
-                        />
-                        <TextArea
-                          rows={8}
-                          value={ch.content}
-                          placeholder="章节正文"
-                          onChange={(e) => updateChapter(idx, { content: e.target.value })}
-                        />
-                      </Space>
-                    ),
-                  }))}
-                />
-              </Card>
+              <ProTable<BookImportChapter>
+                headerTitle={`章节（${preview.chapters.length}）`}
+                rowKey={(_, index) => String(index)}
+                dataSource={preview.chapters}
+                columns={chapterColumns}
+                search={false}
+                options={{ reload: false, density: true, setting: false }}
+                toolBarRender={false}
+                pagination={{
+                  defaultPageSize: 20,
+                  showSizeChanger: true,
+                  pageSizeOptions: [10, 20, 50, 100],
+                  showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条 / 共 ${total} 章`,
+                }}
+                size="small"
+              />
+
+              <Drawer
+                open={editingChapterIndex !== null}
+                width={isMobile ? '100%' : 760}
+                title={
+                  editingChapterIndex !== null && preview.chapters[editingChapterIndex]
+                    ? `第 ${preview.chapters[editingChapterIndex].chapter_number} 章 · ${preview.chapters[editingChapterIndex].title}`
+                    : '编辑章节'
+                }
+                onClose={() => setEditingChapterIndex(null)}
+                extra={
+                  <Button type="primary" onClick={() => setEditingChapterIndex(null)}>
+                    完成
+                  </Button>
+                }
+              >
+                {editingChapterIndex !== null && preview.chapters[editingChapterIndex] && (
+                  <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                    <Input
+                      value={preview.chapters[editingChapterIndex].title}
+                      addonBefore="标题"
+                      onChange={(e) => updateChapter(editingChapterIndex, { title: e.target.value })}
+                    />
+                    <TextArea
+                      rows={3}
+                      value={preview.chapters[editingChapterIndex].summary}
+                      placeholder="章节摘要"
+                      onChange={(e) => updateChapter(editingChapterIndex, { summary: e.target.value })}
+                    />
+                    <TextArea
+                      rows={20}
+                      value={preview.chapters[editingChapterIndex].content}
+                      placeholder="章节正文"
+                      showCount
+                      onChange={(e) => updateChapter(editingChapterIndex, { content: e.target.value })}
+                    />
+                  </Space>
+                )}
+              </Drawer>
 
               </Space>
             </div>
